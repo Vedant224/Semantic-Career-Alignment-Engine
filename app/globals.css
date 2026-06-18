@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-match: var(--match);
+  --color-match-foreground: var(--match-foreground);
+  --color-gap: var(--gap);
+  --color-gap-foreground: var(--gap-foreground);
+  --color-partial: var(--partial);
+  --color-partial-foreground: var(--partial-foreground);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.875rem;
+
+  /* Sky-blue, white-gradient light theme */
+  --background: #eef6ff;
+  --foreground: #0e2a47;
+
+  --card: #ffffff;
+  --card-foreground: #0e2a47;
+
+  --popover: #ffffff;
+  --popover-foreground: #0e2a47;
+
+  /* Strong sky blue */
+  --primary: #0284c7;
+  --primary-foreground: #f0f9ff;
+
+  --secondary: #dbedff;
+  --secondary-foreground: #0c4a6e;
+
+  --muted: #e3eefb;
+  --muted-foreground: #5a738f;
+
+  --accent: #bae0fd;
+  --accent-foreground: #075985;
+
+  --border: #cfe2f7;
+  --input: #d6e6f9;
+  --ring: #38bdf8;
+
+  /* Semantic alignment states */
+  --match: #0e9488;
+  --match-foreground: #ecfeff;
+  --gap: #e0533d;
+  --gap-foreground: #fff1ee;
+  --partial: #d98521;
+  --partial-foreground: #fff7ed;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Soft animated radial blue gradient backdrop */
+.app-gradient {
+  background:
+    radial-gradient(60rem 40rem at 80% -10%, #cfe8ff 0%, rgba(207, 232, 255, 0) 60%),
+    radial-gradient(50rem 40rem at -10% 10%, #e2f0ff 0%, rgba(226, 240, 255, 0) 55%),
+    linear-gradient(180deg, #eef6ff 0%, #f7fbff 100%);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s ease both;
+}
