@@ -301,14 +301,14 @@ function renderResume(
   }
 
   // ---- Heading ----
-  doc.setFont("helvetica", "bold")
+  doc.setFont("times", "bold")
   doc.setFontSize(fs(20))
   doc.setTextColor(...NAVY)
   doc.text(resume.name.toUpperCase(), pageW / 2, y, { align: "center" })
   y += lh(20) + 1
 
   if (resume.headline) {
-    doc.setFont("helvetica", "normal")
+    doc.setFont("times", "normal")
     doc.setFontSize(fs(10.5))
     doc.setTextColor(...ROYAL)
     doc.text(resume.headline, pageW / 2, y, { align: "center" })
@@ -318,7 +318,7 @@ function renderResume(
   const section = (title: string) => {
     ensureSpace(12)
     y += 3
-    doc.setFont("helvetica", "bold")
+    doc.setFont("times", "bold")
     doc.setFontSize(fs(11.5))
     doc.setTextColor(...NAVY)
     doc.text(title.toUpperCase(), marginX, y)
@@ -330,21 +330,26 @@ function renderResume(
   }
 
   const paragraph = (text: string, pt: number, color: [number, number, number], style: "normal" | "italic" = "normal") => {
-    doc.setFont("helvetica", style)
+    doc.setFont("times", style)
     doc.setFontSize(fs(pt))
     doc.setTextColor(...color)
     const lines = doc.splitTextToSize(text, usableW)
-    for (const line of lines) {
+    lines.forEach((line: string, idx: number) => {
       ensureSpace(lh(pt) + 1)
-      doc.text(line, marginX, y)
+      // Justify every line except the last for a clean LaTeX-like block.
+      if (idx < lines.length - 1) {
+        doc.text(line, marginX, y, { align: "justify", maxWidth: usableW })
+      } else {
+        doc.text(line, marginX, y)
+      }
       y += lh(pt) + 0.6
-    }
+    })
   }
 
   // Render a bullet with a leading dot and JD emphasis color.
   const bullet = (text: string, emphasized: boolean) => {
     const pt = 9.5
-    doc.setFont("helvetica", emphasized ? "bold" : "normal")
+    doc.setFont("times", emphasized ? "bold" : "normal")
     doc.setFontSize(fs(pt))
     doc.setTextColor(...(emphasized ? ROYAL : BODY))
     const indent = marginX + 4
@@ -371,7 +376,7 @@ function renderResume(
     section("Technical Skills")
     const pt = 9.5
     for (const group of skillGroups) {
-      doc.setFont("helvetica", "bold")
+      doc.setFont("times", "bold")
       doc.setFontSize(fs(pt))
       doc.setTextColor(...NAVY)
       const labelText = `${group.label}: `
@@ -379,7 +384,7 @@ function renderResume(
       const lines = doc.splitTextToSize(group.items.join(", "), usableW - labelW)
       ensureSpace(lh(pt) + 1)
       doc.text(labelText, marginX, y)
-      doc.setFont("helvetica", "normal")
+      doc.setFont("times", "normal")
       doc.setTextColor(...BODY)
       lines.forEach((line: string, i: number) => {
         if (i > 0) {
@@ -398,13 +403,13 @@ function renderResume(
     resume.experiences.forEach((exp, idx) => {
       ensureSpace(lh(11) + lh(10) + 4)
       const heading = exp.location ? `${exp.company}  •  ${exp.location}` : exp.company
-      doc.setFont("helvetica", "bold")
+      doc.setFont("times", "bold")
       doc.setFontSize(fs(10.5))
       doc.setTextColor(...BODY)
       doc.text(heading, marginX, y)
       doc.text(exp.period, pageW - marginX, y, { align: "right" })
       y += lh(10.5) + 0.4
-      doc.setFont("helvetica", "italic")
+      doc.setFont("times", "italic")
       doc.setFontSize(fs(9.5))
       doc.setTextColor(...MUTED)
       doc.text(exp.role, marginX, y)
@@ -419,25 +424,25 @@ function renderResume(
     section("Technical Projects")
     resume.projects.forEach((proj, idx) => {
       ensureSpace(lh(10.5) + 4)
-      doc.setFont("helvetica", "bold")
+      doc.setFont("times", "bold")
       doc.setFontSize(fs(10.5))
       doc.setTextColor(...BODY)
       doc.text(proj.name, marginX, y)
       if (proj.link) {
-        doc.setFont("helvetica", "bold")
+        doc.setFont("times", "bold")
         doc.setTextColor(...ROYAL)
         doc.textWithLink("LINK", pageW - marginX, y, { align: "right", url: proj.link })
       }
       y += lh(10.5) + 0.4
       if (proj.techStack) {
-        doc.setFont("helvetica", "italic")
+        doc.setFont("times", "italic")
         doc.setFontSize(fs(9))
         doc.setTextColor(...MUTED)
         doc.text(proj.techStack, marginX, y)
         y += lh(9) + 0.6
       }
       if (proj.highlight) {
-        doc.setFont("helvetica", "normal")
+        doc.setFont("times", "normal")
         doc.setFontSize(fs(9))
         doc.setTextColor(...NAVY)
         const hl = doc.splitTextToSize(proj.highlight, usableW)
@@ -458,13 +463,13 @@ function renderResume(
     resume.education.forEach((edu) => {
       ensureSpace(lh(10.5) + lh(9.5) + 2)
       const heading = edu.location ? `${edu.institution}  •  ${edu.location}` : edu.institution
-      doc.setFont("helvetica", "bold")
+      doc.setFont("times", "bold")
       doc.setFontSize(fs(10.5))
       doc.setTextColor(...BODY)
       doc.text(heading, marginX, y)
       doc.text(edu.period, pageW - marginX, y, { align: "right" })
       y += lh(10.5) + 0.4
-      doc.setFont("helvetica", "italic")
+      doc.setFont("times", "italic")
       doc.setFontSize(fs(9.5))
       doc.setTextColor(...MUTED)
       doc.text(edu.degree, marginX, y)
@@ -479,7 +484,7 @@ function renderResume(
     resume.certifications.forEach((cert) => {
       const issuer = cert.issuer ? ` — ${cert.issuer}` : ""
       const text = `${cert.name}${issuer}`
-      doc.setFont("helvetica", "bold")
+      doc.setFont("times", "bold")
       doc.setFontSize(fs(pt))
       doc.setTextColor(...BODY)
       const indent = marginX + 4
@@ -495,7 +500,7 @@ function renderResume(
         y += lh(pt) + 0.5
       })
       if (cert.link) {
-        doc.setFont("helvetica", "normal")
+        doc.setFont("times", "normal")
         doc.setFontSize(fs(8.5))
         doc.setTextColor(...ROYAL)
         doc.textWithLink("View credential", indent, y, { url: cert.link })

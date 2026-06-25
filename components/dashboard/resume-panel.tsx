@@ -1,10 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { FileText, Sparkles, Download, Code, ExternalLink } from "lucide-react"
+import { FileText, Sparkles, Download, Code } from "lucide-react"
 import type { AlignmentResult } from "@/lib/types"
-import { cn } from "@/lib/utils"
 import { generateLatexResume, downloadLatex, generateResumePdf } from "@/lib/latex-generator"
+
+// Match the exact colors used in the generated PDF so the on-screen
+// "paper" preview is a true what-you-see-is-what-you-download document.
+const NAVY = "#0a3061"
+const ROYAL = "#4169e1"
+const INK = "#1f2937"
+const MUTED = "#5a6473"
 
 export function ResumePanel({ result }: { result: AlignmentResult | null }) {
   const [isExporting, setIsExporting] = useState(false)
@@ -27,6 +33,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
     const latex = generateLatexResume(result)
     downloadLatex(latex, "resume.tex")
   }
+
   if (!result) {
     return (
       <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center">
@@ -56,7 +63,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
         <div className="flex gap-2">
           <button
             onClick={handleDownloadLatex}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary/10 text-primary"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
             title="Download as LaTeX file"
           >
             <Code className="h-3.5 w-3.5" aria-hidden="true" />
@@ -65,7 +72,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
           <button
             onClick={handleDownloadPdf}
             disabled={isExporting}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary/10 text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
             title="Download as PDF"
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
@@ -74,195 +81,199 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
         </div>
       </div>
 
-      <div id="resume-content" className="space-y-6 p-6">
-        <header>
-          <h2 className="font-serif text-3xl font-medium tracking-tight text-foreground">
-            {resume.name}
-          </h2>
-          <p className="mt-0.5 text-base text-primary">{resume.headline}</p>
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-primary/15 bg-primary/5 p-3">
-            <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
-            <p className="text-sm leading-relaxed text-foreground/80">{resume.summary}</p>
-          </div>
-        </header>
+      {/* Paper-style document — what you see is what you download */}
+      <div className="max-h-[80vh] overflow-y-auto bg-secondary/30 p-4 sm:p-6">
+        <article
+          className="mx-auto max-w-[820px] bg-white px-9 py-9 font-serif text-[13px] leading-snug shadow-md sm:px-12 sm:py-11"
+          style={{ color: INK }}
+          aria-label="Resume preview"
+        >
+          {/* Heading */}
+          <header className="text-center">
+            <h2
+              className="text-2xl font-bold uppercase tracking-wide"
+              style={{ color: NAVY, fontVariant: "small-caps" }}
+            >
+              {resume.name}
+            </h2>
+            <p className="mt-1 text-sm" style={{ color: ROYAL }}>
+              {resume.headline}
+            </p>
+          </header>
 
-        {resume.skillGroups.length > 0 && (
-          <section>
-            <SectionTitle>Technical Skills</SectionTitle>
-            <div className="mt-3 space-y-2.5">
-              {resume.skillGroups.map((group) => (
-                <div key={group.label} className="flex flex-col gap-1.5 sm:flex-row sm:gap-3">
-                  <span className="shrink-0 pt-1 text-xs font-semibold text-foreground sm:w-32">
-                    {group.label}
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {group.items.map((skill) => (
-                      <span
-                        key={skill}
-                        className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+          {/* Professional Summary */}
+          <PaperSection title="Professional Summary">
+            <p className="text-justify leading-relaxed">{resume.summary}</p>
+          </PaperSection>
 
-        <section>
-          <SectionTitle>Professional Experience</SectionTitle>
-          <div className="mt-3 space-y-5">
-            {resume.experiences.map((exp) => (
-              <article key={`${exp.role}-${exp.company}`}>
-                <div className="flex items-baseline justify-between gap-3">
-                  <h4 className="font-medium text-foreground">
-                    {exp.company}
-                    {exp.location && (
-                      <span className="font-normal text-muted-foreground"> · {exp.location}</span>
-                    )}
-                  </h4>
-                  <span className="shrink-0 text-xs text-muted-foreground">{exp.period}</span>
-                </div>
-                <p className="text-sm italic text-muted-foreground">{exp.role}</p>
-                <ul className="mt-2 space-y-1.5">
-                  {exp.bullets.map((bullet, i) => (
-                    <Bullet key={i} bullet={bullet} />
+          {/* Technical Skills */}
+          {resume.skillGroups.some((g) => g.items.length > 0) && (
+            <PaperSection title="Technical Skills">
+              <ul className="space-y-1">
+                {resume.skillGroups
+                  .filter((g) => g.items.length > 0)
+                  .map((group) => (
+                    <li key={group.label} className="leading-relaxed">
+                      <span className="font-bold" style={{ color: NAVY }}>
+                        {group.label}:
+                      </span>{" "}
+                      {group.items.join(", ")}
+                    </li>
                   ))}
-                </ul>
-              </article>
-            ))}
-          </div>
-        </section>
+              </ul>
+            </PaperSection>
+          )}
 
-        {resume.projects.length > 0 && (
-          <section>
-            <SectionTitle>Technical Projects</SectionTitle>
-            <div className="mt-3 space-y-5">
-              {resume.projects.map((proj) => (
-                <article key={proj.name}>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <h4 className="font-medium text-foreground">
-                      {proj.name}
+          {/* Professional Experience */}
+          {resume.experiences.length > 0 && (
+            <PaperSection title="Professional Experience">
+              <div className="space-y-3">
+                {resume.experiences.map((exp) => (
+                  <div key={`${exp.role}-${exp.company}`}>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="font-bold">
+                        {exp.company}
+                        {exp.location && <span className="font-normal">{`  •  ${exp.location}`}</span>}
+                      </span>
+                      <span className="shrink-0 text-[12px] font-bold">{exp.period}</span>
+                    </div>
+                    <p className="italic" style={{ color: MUTED }}>
+                      {exp.role}
+                    </p>
+                    <PaperBullets bullets={exp.bullets} />
+                  </div>
+                ))}
+              </div>
+            </PaperSection>
+          )}
+
+          {/* Technical Projects */}
+          {resume.projects.length > 0 && (
+            <PaperSection title="Technical Projects">
+              <div className="space-y-3">
+                {resume.projects.map((proj) => (
+                  <div key={proj.name}>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="font-bold">
+                        {proj.name}
+                        {proj.techStack && (
+                          <span className="font-normal italic" style={{ color: MUTED }}>
+                            {`  |  ${proj.techStack}`}
+                          </span>
+                        )}
+                      </span>
                       {proj.link && (
                         <a
                           href={proj.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="ml-1.5 inline-flex items-center gap-0.5 align-middle text-xs font-medium text-primary hover:underline"
+                          className="shrink-0 text-[12px] font-bold hover:underline"
+                          style={{ color: ROYAL }}
                         >
-                          <ExternalLink className="h-3 w-3" aria-hidden="true" />
-                          <span className="sr-only">Open {proj.name}</span>
+                          LINK
                         </a>
                       )}
-                    </h4>
-                  </div>
-                  {proj.techStack && (
-                    <p className="text-xs italic text-muted-foreground">{proj.techStack}</p>
-                  )}
-                  {proj.highlight && (
-                    <p className="mt-0.5 text-xs font-medium text-primary">{proj.highlight}</p>
-                  )}
-                  <ul className="mt-2 space-y-1.5">
-                    {proj.bullets.map((bullet, i) => (
-                      <Bullet key={i} bullet={bullet} />
-                    ))}
-                  </ul>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {resume.education.length > 0 && (
-          <section>
-            <SectionTitle>Education</SectionTitle>
-            <div className="mt-3 space-y-3">
-              {resume.education.map((edu) => (
-                <div key={`${edu.institution}-${edu.degree}`}>
-                  <div className="flex items-baseline justify-between gap-3">
-                    <h4 className="font-medium text-foreground">
-                      {edu.institution}
-                      {edu.location && (
-                        <span className="font-normal text-muted-foreground"> · {edu.location}</span>
-                      )}
-                    </h4>
-                    <span className="shrink-0 text-xs text-muted-foreground">{edu.period}</span>
-                  </div>
-                  <p className="text-sm italic text-muted-foreground">{edu.degree}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {resume.certifications.length > 0 && (
-          <section>
-            <SectionTitle>Achievements &amp; Certifications</SectionTitle>
-            <ul className="mt-3 space-y-1.5">
-              {resume.certifications.map((cert) => (
-                <li key={cert.name} className="flex gap-2 text-sm leading-relaxed text-foreground/80">
-                  <span
-                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-                    aria-hidden="true"
-                  />
-                  <span>
-                    <span className="font-medium text-foreground">{cert.name}</span>
-                    {cert.issuer && <span className="text-muted-foreground"> — {cert.issuer}</span>}
-                    {cert.link && (
-                      <a
-                        href={cert.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-1.5 inline-flex items-center gap-0.5 align-middle text-xs font-medium text-primary hover:underline"
-                      >
-                        <ExternalLink className="h-3 w-3" aria-hidden="true" />
-                        Credential
-                      </a>
+                    </div>
+                    {proj.highlight && (
+                      <p style={{ color: NAVY }}>{proj.highlight}</p>
                     )}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+                    <PaperBullets bullets={proj.bullets} />
+                  </div>
+                ))}
+              </div>
+            </PaperSection>
+          )}
+
+          {/* Education */}
+          {resume.education.length > 0 && (
+            <PaperSection title="Education">
+              <div className="space-y-2">
+                {resume.education.map((edu) => (
+                  <div key={`${edu.institution}-${edu.degree}`}>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="font-bold">
+                        {edu.institution}
+                        {edu.location && <span className="font-normal">{`  •  ${edu.location}`}</span>}
+                      </span>
+                      <span className="shrink-0 text-[12px] font-bold">{edu.period}</span>
+                    </div>
+                    <p className="italic" style={{ color: MUTED }}>
+                      {edu.degree}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </PaperSection>
+          )}
+
+          {/* Achievements & Certifications */}
+          {resume.certifications.length > 0 && (
+            <PaperSection title="Achievements & Certifications">
+              <ul className="space-y-1">
+                {resume.certifications.map((cert) => (
+                  <li key={cert.name} className="flex gap-2 leading-relaxed">
+                    <span aria-hidden="true" style={{ color: MUTED }}>
+                      •
+                    </span>
+                    <span>
+                      <span className="font-bold">{cert.name}</span>
+                      {cert.issuer && <span>{` — ${cert.issuer}`}</span>}
+                      {cert.link && (
+                        <a
+                          href={cert.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-1.5 text-[12px] hover:underline"
+                          style={{ color: ROYAL }}
+                        >
+                          View credential
+                        </a>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </PaperSection>
+          )}
+        </article>
       </div>
     </div>
   )
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+function PaperSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <h3 className="border-b border-border pb-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+    <section className="mt-4">
+      <h3
+        className="mb-1.5 border-b pb-0.5 text-[13px] font-bold uppercase tracking-wide"
+        style={{ color: NAVY, borderColor: NAVY }}
+      >
+        {title}
+      </h3>
       {children}
-    </h3>
+    </section>
   )
 }
 
-function Bullet({ bullet }: { bullet: { text: string; emphasized: boolean } }) {
+function PaperBullets({ bullets }: { bullets: { text: string; emphasized: boolean }[] }) {
   return (
-    <li
-      className={cn(
-        "flex gap-2 text-sm leading-relaxed",
-        bullet.emphasized ? "text-foreground" : "text-foreground/70",
-      )}
-    >
-      <span
-        className={cn(
-          "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
-          bullet.emphasized ? "bg-primary" : "bg-border",
-        )}
-        aria-hidden="true"
-      />
-      <span>
-        {bullet.text}
-        {bullet.emphasized && (
-          <span className="ml-1.5 inline-flex items-center whitespace-nowrap rounded-full bg-primary/10 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/20">
-            JD&nbsp;match
+    <ul className="mt-1 space-y-0.5">
+      {bullets.map((bullet, i) => (
+        <li key={i} className="flex gap-2 leading-relaxed">
+          <span
+            aria-hidden="true"
+            style={{ color: bullet.emphasized ? ROYAL : MUTED }}
+          >
+            •
           </span>
-        )}
-      </span>
-    </li>
+          <span
+            className={bullet.emphasized ? "font-semibold" : ""}
+            style={{ color: bullet.emphasized ? ROYAL : INK }}
+          >
+            {bullet.text}
+          </span>
+        </li>
+      ))}
+    </ul>
   )
 }
