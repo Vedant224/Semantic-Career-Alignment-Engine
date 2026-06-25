@@ -1,8 +1,98 @@
-import { FileText, Sparkles } from "lucide-react"
+"use client"
+
+import { useState } from "react"
+import { FileText, Sparkles, Download, Code } from "lucide-react"
 import type { AlignmentResult } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { generateLatexResume, downloadLatex, generatePdfFromHtml } from "@/lib/latex-generator"
+import { PrintableResume } from "./printable-resume"
 
 export function ResumePanel({ result }: { result: AlignmentResult | null }) {
+  const [isExporting, setIsExporting] = useState(false)
+
+  const handleDownloadPdf = async () => {
+    if (!result) return
+    setIsExporting(true)
+    try {
+      // Create a temporary div with the printable resume
+      const tempDiv = document.createElement("div")
+      tempDiv.innerHTML = `
+        <div style="font-family: 'Fira Code', monospace; padding: 20px; background: white; font-size: 11px;">
+          <div style="text-align: center; margin-bottom: 15px;">
+            <div style="font-size: 18px; font-weight: bold; color: #0a3061;">
+              ${result.resume.name}
+            </div>
+            <div style="font-size: 10px; margin-top: 5px; color: #666;">
+              City, State | (555) 000-0000 | email@example.com
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 12px; font-weight: bold; color: #0a3061; border-bottom: 1px solid #0a3061; padding-bottom: 3px; margin-bottom: 6px;">PROFESSIONAL SUMMARY</div>
+            <div style="font-size: 10px; line-height: 1.5;">${result.resume.summary}</div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 12px; font-weight: bold; color: #0a3061; border-bottom: 1px solid #0a3061; padding-bottom: 3px; margin-bottom: 6px;">TECHNICAL SKILLS</div>
+            <div style="font-size: 10px; line-height: 1.5;">
+              <strong>Core Skills:</strong> ${result.resume.coreSkills.join(", ")}
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 12px; font-weight: bold; color: #0a3061; border-bottom: 1px solid #0a3061; padding-bottom: 3px; margin-bottom: 6px;">PROFESSIONAL EXPERIENCE</div>
+            ${result.resume.experiences
+              .map(
+                (exp) => `
+              <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px;">
+                  <span>${exp.role}</span>
+                  <span>${exp.period}</span>
+                </div>
+                <div style="font-size: 10px; font-style: italic; margin-bottom: 3px; color: #0284c7;">${exp.company}</div>
+                <ul style="margin: 3px 0; padding-left: 15px; font-size: 10px;">
+                  ${exp.bullets
+                    .map(
+                      (b) => `
+                    <li style="margin-bottom: 2px; ${b.emphasized ? "font-weight: bold; color: #4169e1;" : ""}">
+                      ${b.text}
+                      ${b.emphasized ? '<span style="font-size: 8px; margin-left: 4px;">[JD MATCH]</span>' : ""}
+                    </li>
+                  `
+                    )
+                    .join("")}
+                </ul>
+              </div>
+            `
+              )
+              .join("")}
+          </div>
+        </div>
+      `
+      document.body.appendChild(tempDiv)
+      await generatePdfFromHtml(tempDiv, "resume.pdf")
+      document.body.removeChild(tempDiv)
+    } catch (error) {
+      console.error("[v0] PDF download error:", error)
+      alert("Failed to generate PDF. Please try again.")
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const handleDownloadLatex = () => {
+    if (!result) return
+    const latex = generateLatexResume(result, {
+      name: result.resume.name,
+      email: "your.email@example.com",
+      phone: "+1 (555) 000-0000",
+      location: "City, State, Country",
+      linkedin: "your-linkedin",
+      github: "your-github",
+      website: "yourwebsite.com",
+    })
+    downloadLatex(latex, "resume.tex")
+  }
   if (!result) {
     return (
       <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center">
@@ -29,10 +119,28 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
           <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
           Optimized resume
         </div>
-        <span className="text-xs text-muted-foreground">Tailored to the target role</span>
+        <div className="flex gap-2">
+          <button
+            onClick={handleDownloadLatex}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary/10 text-primary"
+            title="Download as LaTeX file"
+          >
+            <Code className="h-3.5 w-3.5" aria-hidden="true" />
+            LaTeX
+          </button>
+          <button
+            onClick={handleDownloadPdf}
+            disabled={isExporting}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary/10 text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Download as PDF"
+          >
+            <Download className="h-3.5 w-3.5" aria-hidden="true" />
+            {isExporting ? "Exporting..." : "PDF"}
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-6 p-6">
+      <div id="resume-content" className="space-y-6 p-6">
         <header>
           <h2 className="font-serif text-3xl font-medium tracking-tight text-foreground">
             {resume.name}
@@ -104,6 +212,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
           </div>
         </section>
       </div>
+      <PrintableResume result={result} />
     </div>
   )
 }
