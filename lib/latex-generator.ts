@@ -122,10 +122,8 @@ ${educationContent}  \\resumeSubHeadingListEnd`)
     sections.push(`%-----------ACHIEVEMENTS & CERTIFICATIONS-----------
 \\vspace{-13pt}
 \\section{\\textcolor{custom1}{Achievements \\& Certifications}}
-    \\resumeSubHeadingListStart
-        \\resumeItemListStart
-${certsContent}        \\resumeItemListEnd
-    \\resumeSubHeadingListEnd`)
+    \\resumeItemListStart
+${certsContent}    \\resumeItemListEnd`)
   }
 
   return `%-------------------------
@@ -201,8 +199,8 @@ ${certsContent}        \\resumeItemListEnd
     \\end{tabular*}\\vspace{-7pt}
 }
 
-\\renewcommand\\labelitemi{$$\\vcenter{\\hbox{\\tiny$$\\bullet$$}}$$}
-\\renewcommand\\labelitemii{$$\\vcenter{\\hbox{\\tiny$$\\bullet$$}}$$}
+\\renewcommand\\labelitemi{$\\vcenter{\\hbox{\\tiny$\\bullet$}}$}
+\\renewcommand\\labelitemii{$\\vcenter{\\hbox{\\tiny$\\bullet$}}$}
 
 \\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.0in, label={}]}
 \\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}

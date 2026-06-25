@@ -1,9 +1,14 @@
 "use client"
 
-import { useState } from "react"
-import { FileText, Sparkles, Download, Code } from "lucide-react"
+import { useState, useEffect } from "react"
+import { FileText, Sparkles, Download, Code, FileType, LayoutPanelTop, Loader2 } from "lucide-react"
 import type { AlignmentResult } from "@/lib/types"
-import { generateLatexResume, downloadLatex, downloadResumePdf } from "@/lib/latex-generator"
+import {
+  generateLatexResume,
+  downloadLatex,
+  downloadResumePdf,
+  compileResumePdf,
+} from "@/lib/latex-generator"
 
 // Match the exact colors used in the generated PDF so the on-screen
 // "paper" preview is a true what-you-see-is-what-you-download document.
@@ -12,9 +17,38 @@ const ROYAL = "#4169e1"
 const INK = "#1f2937"
 const MUTED = "#5a6473"
 
+type ViewMode = "preview" | "pdf"
+
 export function ResumePanel({ result }: { result: AlignmentResult | null }) {
   const [isExporting, setIsExporting] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [view, setView] = useState<ViewMode>("preview")
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [pdfStatus, setPdfStatus] = useState<"idle" | "loading" | "error">("idle")
+
+  // Compile the true LaTeX PDF whenever the user switches to PDF view (or the
+  // result changes while in PDF view). Revokes old object URLs to avoid leaks.
+  useEffect(() => {
+    if (view !== "pdf" || !result) return
+    let cancelled = false
+    let createdUrl: string | null = null
+    setPdfStatus("loading")
+    compileResumePdf(result)
+      .then((blob) => {
+        if (cancelled) return
+        createdUrl = URL.createObjectURL(blob)
+        setPdfUrl(createdUrl)
+        setPdfStatus("idle")
+      })
+      .catch((error) => {
+        console.log("[v0] PDF preview compile failed:", error)
+        if (!cancelled) setPdfStatus("error")
+      })
+    return () => {
+      cancelled = true
+      if (createdUrl) URL.revokeObjectURL(createdUrl)
+    }
+  }, [view, result])
 
   const handleDownloadPdf = async () => {
     if (!result) return
@@ -63,9 +97,37 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="flex items-center justify-between border-b border-border bg-secondary/40 px-6 py-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-secondary-foreground">
-          <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
-          Optimized resume
+        <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-2 text-sm font-medium text-secondary-foreground sm:flex">
+            <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
+            Optimized resume
+          </div>
+          <div className="flex rounded-lg bg-muted p-0.5">
+            <button
+              onClick={() => setView("preview")}
+              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                view === "preview"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="Fast live preview"
+            >
+              <LayoutPanelTop className="h-3.5 w-3.5" aria-hidden="true" />
+              Live
+            </button>
+            <button
+              onClick={() => setView("pdf")}
+              className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                view === "pdf"
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              title="True LaTeX-compiled PDF"
+            >
+              <FileType className="h-3.5 w-3.5" aria-hidden="true" />
+              PDF
+            </button>
+          </div>
         </div>
         <div className="flex gap-2">
           <button
@@ -94,7 +156,37 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
         </div>
       )}
 
-      {/* Paper-style document — what you see is what you download */}
+      {/* True LaTeX-compiled PDF view */}
+      {view === "pdf" && (
+        <div className="bg-secondary/30 p-4 sm:p-6">
+          {pdfStatus === "loading" && (
+            <div className="flex h-[70vh] flex-col items-center justify-center gap-3 text-muted-foreground">
+              <Loader2 className="h-7 w-7 animate-spin text-primary" aria-hidden="true" />
+              <p className="text-sm">Compiling your resume with LaTeX…</p>
+            </div>
+          )}
+          {pdfStatus === "error" && (
+            <div className="flex h-[70vh] flex-col items-center justify-center gap-3 px-6 text-center text-muted-foreground">
+              <FileType className="h-8 w-8 text-primary" aria-hidden="true" />
+              <p className="max-w-md text-sm">
+                The LaTeX engine is temporarily unreachable, so the exact PDF can&apos;t be rendered
+                right now. Switch to <span className="font-medium text-foreground">Live</span> for the
+                instant preview, or use the PDF download (it falls back to a built-in generator).
+              </p>
+            </div>
+          )}
+          {pdfStatus === "idle" && pdfUrl && (
+            <iframe
+              src={pdfUrl}
+              title="Compiled LaTeX resume PDF"
+              className="h-[80vh] w-full rounded-lg border border-border bg-white shadow-md"
+            />
+          )}
+        </div>
+      )}
+
+      {/* Paper-style document — fast live preview */}
+      {view === "preview" && (
       <div className="max-h-[80vh] overflow-y-auto bg-secondary/30 p-4 sm:p-6">
         <article
           className="mx-auto max-w-[820px] bg-white px-9 py-9 font-serif text-[13px] leading-snug shadow-md sm:px-12 sm:py-11"
@@ -245,6 +337,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
           )}
         </article>
       </div>
+      )}
     </div>
   )
 }
