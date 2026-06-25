@@ -184,11 +184,7 @@ function buildSkillGroups(graph: CareerGraph, jobLower: string[]): ResumeSkillGr
   return groups
 }
 
-function buildResume(
-  graph: CareerGraph,
-  jobSkills: string[],
-  summaryOverride?: string,
-): GeneratedResume {
+function buildResume(graph: CareerGraph, jobSkills: string[]): GeneratedResume {
   const jobLower = jobSkills.map((s) => normalize(s))
 
   const experiences: ResumeExperience[] = [...graph.experiences]
@@ -236,15 +232,9 @@ function buildResume(
     link: c.link,
   }))
 
-  const topJobSkills = jobSkills.slice(0, 4).join(", ")
-  const fallbackSummary = topJobSkills
-    ? `${graph.summary} Specializing in ${topJobSkills} with a track record matched to this role.`
-    : graph.summary
-
   return {
     name: graph.profileName,
     headline: graph.headline,
-    summary: (summaryOverride || fallbackSummary).trim(),
     skillGroups: buildSkillGroups(graph, jobLower),
     experiences,
     projects,
@@ -266,13 +256,8 @@ function scoreAlignment(alignments: SkillAlignment[], jobSkills: string[]) {
 
 /**
  * Full alignment pass: extract, compare, score, and generate a resume.
- * `summaryOverride` lets the server action inject an AI-tailored summary.
  */
-export function runAlignment(
-  graph: CareerGraph,
-  jobDescription: string,
-  summaryOverride?: string,
-): AlignmentResult {
+export function runAlignment(graph: CareerGraph, jobDescription: string): AlignmentResult {
   const jobSkills = extractJobSkills(jobDescription)
   const alignments = alignGraph(graph, jobSkills)
   const { matched, partial, gaps, score } = scoreAlignment(alignments, jobSkills)
@@ -283,6 +268,6 @@ export function runAlignment(
     partial,
     gaps,
     jobSkills,
-    resume: buildResume(graph, jobSkills, summaryOverride),
+    resume: buildResume(graph, jobSkills),
   }
 }

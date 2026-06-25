@@ -14,8 +14,6 @@ import type { CareerGraph } from "./types"
 const seedGraph: CareerGraph = {
   profileName: "Alex Rivera",
   headline: "Senior Full-Stack Engineer",
-  summary:
-    "Full-stack engineer with 8 years building data-intensive web products. Comfortable owning features end to end, from Postgres schema design to polished React interfaces.",
   experiences: [
     {
       id: "exp-1",

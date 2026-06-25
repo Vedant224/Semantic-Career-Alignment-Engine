@@ -88,15 +88,8 @@ ${skillsLines}
   // Assemble optional sections.
   const sections: string[] = []
 
-  sections.push(`%-----------PROFESSIONAL SUMMARY-----------
-\\section{\\textcolor{custom1}{Professional Summary}}
-    \\resumeSubHeadingListStart
-    \\small{${escapeLatex(resume.summary)}}
-    \\resumeSubHeadingListEnd`)
-
   if (skillsContent) {
     sections.push(`%-----------TECHNICAL SKILLS-----------
-\\vspace{-13pt}
 \\section{\\textcolor{custom1}{Technical Skills}}
  ${skillsContent}`)
   }
@@ -244,6 +237,64 @@ export function downloadLatex(content: string, filename = "resume.tex"): void {
   document.body.removeChild(element)
 }
 
+function triggerBlobDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob)
+  const element = document.createElement("a")
+  element.href = url
+  element.download = filename
+  element.style.display = "none"
+  document.body.appendChild(element)
+  element.click()
+  document.body.removeChild(element)
+  URL.revokeObjectURL(url)
+}
+
+/**
+ * Compile the generated LaTeX into a TRUE LaTeX PDF via the server route
+ * (which proxies to a full TeX Live engine). Returns the PDF blob so the
+ * caller can download or preview it. Throws on failure so the caller can
+ * fall back to the lightweight jsPDF generator.
+ */
+export async function compileResumePdf(result: AlignmentResult): Promise<Blob> {
+  const tex = generateLatexResume(result)
+  const res = await fetch("/api/compile-latex", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tex }),
+  })
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "")
+    throw new Error(`LaTeX compile failed (${res.status}): ${detail.slice(0, 300)}`)
+  }
+
+  const blob = await res.blob()
+  if (blob.type && !blob.type.includes("pdf")) {
+    throw new Error("LaTeX service did not return a PDF")
+  }
+  return blob
+}
+
+/**
+ * Download a true LaTeX-compiled PDF. Falls back to the in-browser jsPDF
+ * generator if the LaTeX service is unavailable, so a download always works.
+ * Returns the engine actually used.
+ */
+export async function downloadResumePdf(
+  result: AlignmentResult,
+  filename = "resume.pdf",
+): Promise<"latex" | "fallback"> {
+  try {
+    const blob = await compileResumePdf(result)
+    triggerBlobDownload(blob, filename)
+    return "latex"
+  } catch (error) {
+    console.log("[v0] LaTeX compile unavailable, using jsPDF fallback:", error)
+    await generateResumePdf(result, filename)
+    return "fallback"
+  }
+}
+
 // Theme colors as RGB tuples for the PDF.
 const NAVY: [number, number, number] = [10, 48, 97]
 const ROYAL: [number, number, number] = [37, 99, 235]
@@ -329,23 +380,6 @@ function renderResume(
     y += 4
   }
 
-  const paragraph = (text: string, pt: number, color: [number, number, number], style: "normal" | "italic" = "normal") => {
-    doc.setFont("times", style)
-    doc.setFontSize(fs(pt))
-    doc.setTextColor(...color)
-    const lines = doc.splitTextToSize(text, usableW)
-    lines.forEach((line: string, idx: number) => {
-      ensureSpace(lh(pt) + 1)
-      // Justify every line except the last for a clean LaTeX-like block.
-      if (idx < lines.length - 1) {
-        doc.text(line, marginX, y, { align: "justify", maxWidth: usableW })
-      } else {
-        doc.text(line, marginX, y)
-      }
-      y += lh(pt) + 0.6
-    })
-  }
-
   // Render a bullet with a leading dot and JD emphasis color.
   const bullet = (text: string, emphasized: boolean) => {
     const pt = 9.5
@@ -365,10 +399,6 @@ function renderResume(
       y += lh(pt) + 0.5
     })
   }
-
-  // ---- Professional Summary ----
-  section("Professional Summary")
-  paragraph(resume.summary, 9.5, BODY)
 
   // ---- Technical Skills ----
   const skillGroups = resume.skillGroups.filter((g) => g.items.length > 0)

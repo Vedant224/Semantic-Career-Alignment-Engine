@@ -73,7 +73,6 @@ export interface Certification {
 export interface CareerGraph {
   profileName: string
   headline: string
-  summary: string
   experiences: Experience[]
   skills: Skill[]
   projects: Project[]
@@ -133,7 +132,6 @@ export interface ResumeSkillGroup {
 export interface GeneratedResume {
   name: string
   headline: string
-  summary: string
   skillGroups: ResumeSkillGroup[]
   experiences: ResumeExperience[]
   projects: ResumeProject[]

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { FileText, Sparkles, Download, Code } from "lucide-react"
 import type { AlignmentResult } from "@/lib/types"
-import { generateLatexResume, downloadLatex, generateResumePdf } from "@/lib/latex-generator"
+import { generateLatexResume, downloadLatex, downloadResumePdf } from "@/lib/latex-generator"
 
 // Match the exact colors used in the generated PDF so the on-screen
 // "paper" preview is a true what-you-see-is-what-you-download document.
@@ -14,15 +14,22 @@ const MUTED = "#5a6473"
 
 export function ResumePanel({ result }: { result: AlignmentResult | null }) {
   const [isExporting, setIsExporting] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
 
   const handleDownloadPdf = async () => {
     if (!result) return
     setIsExporting(true)
+    setNotice(null)
     try {
-      await generateResumePdf(result, "resume.pdf")
+      const engine = await downloadResumePdf(result, "resume.pdf")
+      if (engine === "fallback") {
+        setNotice(
+          "The LaTeX engine was unreachable, so we generated a built-in PDF instead. Try again shortly for the exact LaTeX version.",
+        )
+      }
     } catch (error) {
       console.error("[v0] PDF download error:", error)
-      alert("Failed to generate PDF. Please try again.")
+      setNotice("Failed to generate PDF. Please try again.")
     } finally {
       setIsExporting(false)
     }
@@ -76,10 +83,16 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
             title="Download as PDF"
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            {isExporting ? "Exporting..." : "PDF"}
+            {isExporting ? "Compiling LaTeX..." : "PDF"}
           </button>
         </div>
       </div>
+
+      {notice && (
+        <div className="border-b border-border bg-[color:var(--partial)]/10 px-6 py-2.5 text-xs text-[color:var(--partial-foreground)]">
+          <span className="text-foreground/80">{notice}</span>
+        </div>
+      )}
 
       {/* Paper-style document — what you see is what you download */}
       <div className="max-h-[80vh] overflow-y-auto bg-secondary/30 p-4 sm:p-6">
@@ -100,11 +113,6 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
               {resume.headline}
             </p>
           </header>
-
-          {/* Professional Summary */}
-          <PaperSection title="Professional Summary">
-            <p className="text-justify leading-relaxed">{resume.summary}</p>
-          </PaperSection>
 
           {/* Technical Skills */}
           {resume.skillGroups.some((g) => g.items.length > 0) && (

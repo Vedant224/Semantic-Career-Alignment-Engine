@@ -191,18 +191,6 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
             />
           </Field>
         </div>
-        <Field label="Professional summary" className="mt-4">
-          <textarea
-            value={graph.summary}
-            onChange={(e) => update({ summary: e.target.value })}
-            rows={3}
-            placeholder="A short summary of who you are and what you do best. The engine rewrites this per role using AI."
-            className={textareaClass}
-          />
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            This is your baseline. When you align to a job, AI rewrites a tailored summary for that role.
-          </p>
-        </Field>
       </Card>
 
       {/* Skills */}
