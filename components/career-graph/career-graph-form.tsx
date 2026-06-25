@@ -14,6 +14,7 @@ import {
   FolderGit2,
   GraduationCap,
   Award,
+  Contact as ContactIcon,
 } from "lucide-react"
 import { updateCareerGraph } from "@/app/actions"
 import type {
@@ -41,6 +42,11 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
   function update(patch: Partial<CareerGraph>) {
     setGraph((g) => ({ ...g, ...patch }))
+    setSaved(false)
+  }
+
+  function updateContact(patch: Partial<CareerGraph["contact"]>) {
+    setGraph((g) => ({ ...g, contact: { ...g.contact, ...patch } }))
     setSaved(false)
   }
 
@@ -188,6 +194,58 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
               value={graph.headline}
               onChange={(v) => update({ headline: v })}
               placeholder="Senior Full-Stack Engineer"
+            />
+          </Field>
+        </div>
+      </Card>
+
+      {/* Contact & Links */}
+      <Card
+        icon={ContactIcon}
+        title="Contact & Links"
+        subtitle="These appear under your name in the resume header"
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Email">
+            <Input
+              value={graph.contact.email}
+              onChange={(v) => updateContact({ email: v })}
+              placeholder="you@example.com"
+            />
+          </Field>
+          <Field label="Phone">
+            <Input
+              value={graph.contact.phone}
+              onChange={(v) => updateContact({ phone: v })}
+              placeholder="+1 (555) 123-4567"
+            />
+          </Field>
+          <Field label="Location">
+            <Input
+              value={graph.contact.location}
+              onChange={(v) => updateContact({ location: v })}
+              placeholder="Seattle, WA"
+            />
+          </Field>
+          <Field label="Personal website">
+            <Input
+              value={graph.contact.website}
+              onChange={(v) => updateContact({ website: v })}
+              placeholder="https://yourname.dev"
+            />
+          </Field>
+          <Field label="GitHub">
+            <Input
+              value={graph.contact.github}
+              onChange={(v) => updateContact({ github: v })}
+              placeholder="https://github.com/username"
+            />
+          </Field>
+          <Field label="LinkedIn">
+            <Input
+              value={graph.contact.linkedin}
+              onChange={(v) => updateContact({ linkedin: v })}
+              placeholder="https://linkedin.com/in/username"
             />
           </Field>
         </div>

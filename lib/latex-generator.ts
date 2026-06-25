@@ -13,8 +13,34 @@ function escapeLatex(str: string): string {
  * Generate an ATS-optimized LaTeX resume that mirrors the user's template.
  * Personal/contact details are intentionally omitted.
  */
+// Strip protocol/trailing slash for clean link display text.
+function displayUrl(url: string): string {
+  return url.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, "")
+}
+
 export function generateLatexResume(result: AlignmentResult): string {
   const { resume } = result
+  const contact = resume.contact
+
+  // ----- Contact line (email • phone • location • links) -----
+  const contactParts: string[] = []
+  if (contact?.email) {
+    contactParts.push(`\\href{mailto:${contact.email}}{\\textcolor{custom2}{${escapeLatex(contact.email)}}}`)
+  }
+  if (contact?.phone) contactParts.push(escapeLatex(contact.phone))
+  if (contact?.location) contactParts.push(escapeLatex(contact.location))
+  if (contact?.website) {
+    contactParts.push(`\\href{${contact.website}}{\\textcolor{custom2}{${escapeLatex(displayUrl(contact.website))}}}`)
+  }
+  if (contact?.github) {
+    contactParts.push(`\\href{${contact.github}}{\\textcolor{custom2}{${escapeLatex(displayUrl(contact.github))}}}`)
+  }
+  if (contact?.linkedin) {
+    contactParts.push(`\\href{${contact.linkedin}}{\\textcolor{custom2}{${escapeLatex(displayUrl(contact.linkedin))}}}`)
+  }
+  const contactLine = contactParts.length
+    ? `\\\\ \\vspace{2pt}\n    \\small ${contactParts.join(" $|$ ")}`
+    : ""
 
   // ----- Technical Skills (grouped by category) -----
   const skillsLines = resume.skillGroups
@@ -91,7 +117,8 @@ ${skillsLines}
   if (skillsContent) {
     sections.push(`%-----------TECHNICAL SKILLS-----------
 \\section{\\textcolor{custom1}{Technical Skills}}
- ${skillsContent}`)
+ ${skillsContent}
+ \\vspace{-7pt}`)
   }
 
   if (experienceContent) {
@@ -205,7 +232,7 @@ ${certsContent}    \\resumeItemListEnd`)
 \\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.0in, label={}]}
 \\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}
 \\newcommand{\\resumeItemListStart}{\\begin{itemize}[itemsep=0pt, parsep=0pt, topsep=2pt, partopsep=0pt, leftmargin=0.2in]}
-\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-5pt}}
+\\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-7pt}}
 
 %-------------------------------------------
 %%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -215,7 +242,7 @@ ${certsContent}    \\resumeItemListEnd`)
 %----------HEADING----------
 \\begin{center}
     {\\LARGE \\scshape \\textcolor{custom1}{${escapeLatex(resume.name)}}} \\\\ \\vspace{2pt}
-    \\small ${escapeLatex(resume.headline)}
+    \\small ${escapeLatex(resume.headline)}${contactLine}
     \\vspace{-5pt}
 \\end{center}
 
@@ -361,7 +388,21 @@ function renderResume(
     doc.setFontSize(fs(10.5))
     doc.setTextColor(...ROYAL)
     doc.text(resume.headline, pageW / 2, y, { align: "center" })
-    y += lh(10.5) + 1.5
+    y += lh(10.5) + 1.2
+  }
+
+  const c = resume.contact
+  if (c) {
+    const parts = [c.email, c.phone, c.location, c.website, c.github, c.linkedin]
+      .filter(Boolean)
+      .map((p) => p.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/$/, ""))
+    if (parts.length) {
+      doc.setFont("times", "normal")
+      doc.setFontSize(fs(9))
+      doc.setTextColor(...MUTED)
+      doc.text(parts.join("  |  "), pageW / 2, y, { align: "center" })
+      y += lh(9) + 1.5
+    }
   }
 
   const section = (title: string) => {

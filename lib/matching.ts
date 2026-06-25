@@ -235,6 +235,7 @@ function buildResume(graph: CareerGraph, jobSkills: string[]): GeneratedResume {
   return {
     name: graph.profileName,
     headline: graph.headline,
+    contact: graph.contact,
     skillGroups: buildSkillGroups(graph, jobLower),
     experiences,
     projects,

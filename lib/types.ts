@@ -70,9 +70,19 @@ export interface Certification {
   link: string
 }
 
+export interface Contact {
+  email: string
+  phone: string
+  location: string
+  website: string
+  github: string
+  linkedin: string
+}
+
 export interface CareerGraph {
   profileName: string
   headline: string
+  contact: Contact
   experiences: Experience[]
   skills: Skill[]
   projects: Project[]
@@ -132,6 +142,7 @@ export interface ResumeSkillGroup {
 export interface GeneratedResume {
   name: string
   headline: string
+  contact: Contact
   skillGroups: ResumeSkillGroup[]
   experiences: ResumeExperience[]
   projects: ResumeProject[]

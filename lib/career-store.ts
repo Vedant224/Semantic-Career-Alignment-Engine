@@ -14,6 +14,14 @@ import type { CareerGraph } from "./types"
 const seedGraph: CareerGraph = {
   profileName: "Alex Rivera",
   headline: "Senior Full-Stack Engineer",
+  contact: {
+    email: "alex.rivera@example.com",
+    phone: "+1 (555) 123-4567",
+    location: "Seattle, WA",
+    website: "https://alexrivera.dev",
+    github: "https://github.com/alexrivera",
+    linkedin: "https://linkedin.com/in/alexrivera",
+  },
   experiences: [
     {
       id: "exp-1",
