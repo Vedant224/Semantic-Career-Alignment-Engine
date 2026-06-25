@@ -180,7 +180,7 @@ ${certsContent}    \\resumeItemListEnd`)
 % Custom commands
 \\newcommand{\\resumeItem}[1]{
   \\item\\small{
-    {#1 \\vspace{-2pt}}
+    {#1 \\vspace{-1pt}}
   }
 }
 
@@ -204,7 +204,7 @@ ${certsContent}    \\resumeItemListEnd`)
 
 \\newcommand{\\resumeSubHeadingListStart}{\\begin{itemize}[leftmargin=0.0in, label={}]}
 \\newcommand{\\resumeSubHeadingListEnd}{\\end{itemize}}
-\\newcommand{\\resumeItemListStart}{\\begin{itemize}}
+\\newcommand{\\resumeItemListStart}{\\begin{itemize}[itemsep=0pt, parsep=0pt, topsep=2pt, partopsep=0pt, leftmargin=0.2in]}
 \\newcommand{\\resumeItemListEnd}{\\end{itemize}\\vspace{-5pt}}
 
 %-------------------------------------------
