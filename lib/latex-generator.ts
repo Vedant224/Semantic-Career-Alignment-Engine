@@ -47,9 +47,9 @@ export function generateLatexResume(result: AlignmentResult): string {
     .filter((g) => g.items.length > 0)
     .map(
       (g) =>
-        `     \\textbf{${escapeLatex(g.label)}:} ${g.items.map(escapeLatex).join(", ")} \\\\`,
+        `     \\textbf{${escapeLatex(g.label)}:} ${g.items.map(escapeLatex).join(", ")}`,
     )
-    .join("\n")
+    .join(" \\\\\n")
 
   const skillsContent = skillsLines
     ? `\\begin{itemize}[leftmargin=0.15in, label={}]
