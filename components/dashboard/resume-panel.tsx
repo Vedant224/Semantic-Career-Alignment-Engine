@@ -14,64 +14,9 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
     if (!result) return
     setIsExporting(true)
     try {
-      // Create a temporary div with the printable resume
-      const tempDiv = document.createElement("div")
-      tempDiv.innerHTML = `
-        <div style="font-family: 'Fira Code', monospace; padding: 20px; background: white; font-size: 11px;">
-          <div style="text-align: center; margin-bottom: 15px;">
-            <div style="font-size: 18px; font-weight: bold; color: #0a3061;">
-              ${result.resume.name}
-            </div>
-            <div style="font-size: 10px; margin-top: 5px; color: #666;">
-              City, State | (555) 000-0000 | email@example.com
-            </div>
-          </div>
-          
-          <div style="margin-bottom: 12px;">
-            <div style="font-size: 12px; font-weight: bold; color: #0a3061; border-bottom: 1px solid #0a3061; padding-bottom: 3px; margin-bottom: 6px;">PROFESSIONAL SUMMARY</div>
-            <div style="font-size: 10px; line-height: 1.5;">${result.resume.summary}</div>
-          </div>
-
-          <div style="margin-bottom: 12px;">
-            <div style="font-size: 12px; font-weight: bold; color: #0a3061; border-bottom: 1px solid #0a3061; padding-bottom: 3px; margin-bottom: 6px;">TECHNICAL SKILLS</div>
-            <div style="font-size: 10px; line-height: 1.5;">
-              <strong>Core Skills:</strong> ${result.resume.coreSkills.join(", ")}
-            </div>
-          </div>
-
-          <div style="margin-bottom: 12px;">
-            <div style="font-size: 12px; font-weight: bold; color: #0a3061; border-bottom: 1px solid #0a3061; padding-bottom: 3px; margin-bottom: 6px;">PROFESSIONAL EXPERIENCE</div>
-            ${result.resume.experiences
-              .map(
-                (exp) => `
-              <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px;">
-                  <span>${exp.role}</span>
-                  <span>${exp.period}</span>
-                </div>
-                <div style="font-size: 10px; font-style: italic; margin-bottom: 3px; color: #0284c7;">${exp.company}</div>
-                <ul style="margin: 3px 0; padding-left: 15px; font-size: 10px;">
-                  ${exp.bullets
-                    .map(
-                      (b) => `
-                    <li style="margin-bottom: 2px; ${b.emphasized ? "font-weight: bold; color: #4169e1;" : ""}">
-                      ${b.text}
-                      ${b.emphasized ? '<span style="font-size: 8px; margin-left: 4px;">[JD MATCH]</span>' : ""}
-                    </li>
-                  `
-                    )
-                    .join("")}
-                </ul>
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-        </div>
-      `
-      document.body.appendChild(tempDiv)
-      await generatePdfFromHtml(tempDiv, "resume.pdf")
-      document.body.removeChild(tempDiv)
+      const element = document.getElementById("resume-print")
+      if (!element) throw new Error("Printable resume element not found")
+      await generatePdfFromHtml(element, "resume.pdf")
     } catch (error) {
       console.error("[v0] PDF download error:", error)
       alert("Failed to generate PDF. Please try again.")
@@ -82,15 +27,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
 
   const handleDownloadLatex = () => {
     if (!result) return
-    const latex = generateLatexResume(result, {
-      name: result.resume.name,
-      email: "your.email@example.com",
-      phone: "+1 (555) 000-0000",
-      location: "City, State, Country",
-      linkedin: "your-linkedin",
-      github: "your-github",
-      website: "yourwebsite.com",
-    })
+    const latex = generateLatexResume(result)
     downloadLatex(latex, "resume.tex")
   }
   if (!result) {

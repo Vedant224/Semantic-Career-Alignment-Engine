@@ -1,11 +1,11 @@
 import type { Metadata } from "next"
-import { Inter, Newsreader } from "next/font/google"
+import { Rubik, Newsreader } from "next/font/google"
 import "./globals.css"
 import { SiteHeader } from "@/components/site-header"
 
-const inter = Inter({
+const rubik = Rubik({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-rubik",
   display: "swap",
 })
 
@@ -35,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${newsreader.variable} bg-background`}>
+    <html lang="en" className={`${rubik.variable} ${newsreader.variable} bg-background`}>
       <body className="font-sans antialiased">
         <div className="app-gradient min-h-screen">
           <SiteHeader />
