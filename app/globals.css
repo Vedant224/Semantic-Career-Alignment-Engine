@@ -26,9 +26,9 @@
   --color-partial: var(--partial);
   --color-partial-foreground: var(--partial-foreground);
 
-  --font-sans: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
   --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
-  --font-mono: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

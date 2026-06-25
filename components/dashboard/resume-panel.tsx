@@ -136,8 +136,8 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
                       <span>
                         {bullet.text}
                         {bullet.emphasized && (
-                          <span className="ml-1.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-primary">
-                            JD match
+                          <span className="ml-1.5 inline-flex items-center whitespace-nowrap rounded-full bg-primary/10 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/20">
+                            JD&nbsp;match
                           </span>
                         )}
                       </span>

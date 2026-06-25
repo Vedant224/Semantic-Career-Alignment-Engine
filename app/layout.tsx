@@ -1,8 +1,15 @@
 import type { Metadata } from "next"
-import { Rubik, Newsreader } from "next/font/google"
+import { JetBrains_Mono, Rubik, Newsreader } from "next/font/google"
 import "./globals.css"
 import { SiteHeader } from "@/components/site-header"
 
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+})
+
+// Rubik is reserved for the generated/printable resume only.
 const rubik = Rubik({
   subsets: ["latin"],
   variable: "--font-rubik",
@@ -35,7 +42,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${rubik.variable} ${newsreader.variable} bg-background`}>
+    <html
+      lang="en"
+      className={`${jetbrainsMono.variable} ${rubik.variable} ${newsreader.variable} bg-background`}
+    >
       <body className="font-sans antialiased">
         <div className="app-gradient min-h-screen">
           <SiteHeader />
