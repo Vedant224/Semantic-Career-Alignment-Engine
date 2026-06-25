@@ -2,9 +2,15 @@ import type {
   AlignmentResult,
   AlignmentStatus,
   CareerGraph,
+  GeneratedResume,
+  ResumeBullet,
   ResumeExperience,
+  ResumeProject,
+  ResumeSkillGroup,
   SkillAlignment,
+  SkillCategory,
 } from "./types"
+import { SKILL_CATEGORIES } from "./types"
 
 /**
  * Lightweight semantic matcher.
@@ -65,7 +71,6 @@ export function extractJobSkills(jobDescription: string): string[] {
     }
   }
 
-  // Capture "X years of Y" and bullet-style requirements heuristically.
   const phraseHits = lower.match(/(?:experience (?:with|in)|proficient in|knowledge of)\s+([a-z0-9+#. ]{3,30})/g)
   if (phraseHits) {
     for (const hit of phraseHits) {
@@ -104,6 +109,11 @@ function statusFor(similarity: number): AlignmentStatus {
   return "gap"
 }
 
+/** Is this text relevant to any of the (normalized) job skills? */
+function relevantToJob(text: string, jobLower: string[], threshold = 0.45): boolean {
+  return jobLower.some((j) => embeddingSimilarity(j, text) >= threshold)
+}
+
 /** Compare the career graph against the extracted job skills. */
 export function alignGraph(graph: CareerGraph, jobSkills: string[]): SkillAlignment[] {
   const graphSkillNames = graph.skills.map((s) => s.name)
@@ -120,7 +130,6 @@ export function alignGraph(graph: CareerGraph, jobSkills: string[]): SkillAlignm
       }
     }
 
-    // Also look for evidence inside experience descriptions.
     for (const exp of graph.experiences) {
       const sim = embeddingSimilarity(jobSkill, exp.description)
       if (sim > best) {
@@ -139,89 +148,120 @@ export function alignGraph(graph: CareerGraph, jobSkills: string[]): SkillAlignm
   })
 }
 
-function buildResume(
-  graph: CareerGraph,
-  jobSkills: string[],
-  alignments: SkillAlignment[],
-): AlignmentResult["resume"] {
-  const matchedSkillNames = new Set(
-    alignments.filter((a) => a.status !== "gap").map((a) => a.evidence ?? ""),
-  )
-  const jobSkillLower = jobSkills.map((s) => normalize(s))
+/** Split a free-form description into sentence-level bullets, JD-emphasized. */
+function bulletsFromText(description: string, jobLower: string[]): ResumeBullet[] {
+  const sentences = description
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
 
-  // Sort core skills so JD-relevant ones surface first.
-  const coreSkills = [...graph.skills]
-    .sort((a, b) => {
-      const aRel = jobSkillLower.some((j) => embeddingSimilarity(j, a.name) >= 0.45) ? 1 : 0
-      const bRel = jobSkillLower.some((j) => embeddingSimilarity(j, b.name) >= 0.45) ? 1 : 0
+  return (sentences.length ? sentences : [description])
+    .filter(Boolean)
+    .map((sentence) => ({
+      text: sentence,
+      emphasized: relevantToJob(sentence, jobLower, 0.4),
+    }))
+}
+
+/** Group skills into categories, with JD-relevant skills floated to the front. */
+function buildSkillGroups(graph: CareerGraph, jobLower: string[]): ResumeSkillGroup[] {
+  const groups: ResumeSkillGroup[] = []
+
+  for (const category of SKILL_CATEGORIES as SkillCategory[]) {
+    const inCategory = graph.skills.filter((s) => s.category === category)
+    if (inCategory.length === 0) continue
+
+    const sorted = [...inCategory].sort((a, b) => {
+      const aRel = relevantToJob(a.name, jobLower) ? 1 : 0
+      const bRel = relevantToJob(b.name, jobLower) ? 1 : 0
       if (aRel !== bRel) return bRel - aRel
       return b.years - a.years
     })
-    .map((s) => s.name)
+
+    groups.push({ label: category, items: sorted.map((s) => s.name) })
+  }
+
+  return groups
+}
+
+function buildResume(graph: CareerGraph, jobSkills: string[]): GeneratedResume {
+  const jobLower = jobSkills.map((s) => normalize(s))
 
   const experiences: ResumeExperience[] = [...graph.experiences]
     .sort((a, b) => (b.endDate || "9999").localeCompare(a.endDate || "9999"))
     .map((exp) => {
-      const bullets = buildBullets(exp, jobSkillLower)
+      const bullets = bulletsFromText(exp.description, jobLower)
+      for (const metric of exp.metrics) {
+        if (metric.label || metric.value) {
+          bullets.push({ text: `${metric.label}: ${metric.value}`.trim(), emphasized: true })
+        }
+      }
+      bullets.sort((a, b) => Number(b.emphasized) - Number(a.emphasized))
       return {
         role: exp.role,
         company: exp.company,
+        location: exp.location,
         period: `${exp.startDate || "—"} – ${exp.endDate || "Present"}`,
         bullets,
       }
     })
 
-  const topJobSkills = jobSkills.slice(0, 4).join(", ")
-  const summary = topJobSkills
-    ? `${graph.summary} Specializing in ${topJobSkills} with a track record matched to this role.`
-    : graph.summary
+  // Projects relevant to the JD (by tech stack / description) surface first.
+  const projects: ResumeProject[] = [...graph.projects]
+    .map((p) => ({
+      name: p.name,
+      link: p.link,
+      techStack: p.techStack,
+      highlight: p.highlight,
+      bullets: bulletsFromText(p.description, jobLower),
+      _rel: relevantToJob(`${p.techStack} ${p.description}`, jobLower) ? 1 : 0,
+    }))
+    .sort((a, b) => b._rel - a._rel)
+    .map(({ _rel, ...p }) => p)
+
+  const education = graph.education.map((e) => ({
+    institution: e.institution,
+    degree: e.degree,
+    location: e.location,
+    period: `${e.startDate || "—"} – ${e.endDate || "Present"}`,
+  }))
+
+  const certifications = graph.certifications.map((c) => ({
+    name: c.name,
+    issuer: c.issuer,
+    link: c.link,
+  }))
 
   return {
     name: graph.profileName,
     headline: graph.headline,
-    summary,
-    coreSkills,
+    contact: graph.contact,
+    skillGroups: buildSkillGroups(graph, jobLower),
     experiences,
-  }
-
-  function buildBullets(exp: (typeof graph.experiences)[number], jobLower: string[]) {
-    const bullets: { text: string; emphasized: boolean }[] = []
-    const sentences = exp.description
-      .split(/(?<=[.!?])\s+/)
-      .map((s) => s.trim())
-      .filter(Boolean)
-
-    for (const sentence of sentences.length ? sentences : [exp.description]) {
-      const emphasized = jobLower.some((j) => embeddingSimilarity(j, sentence) >= 0.4)
-      if (sentence) bullets.push({ text: sentence, emphasized })
-    }
-
-    for (const metric of exp.metrics) {
-      bullets.push({
-        text: `${metric.label}: ${metric.value}`,
-        emphasized: true,
-      })
-    }
-
-    // Emphasized bullets float to the top.
-    return bullets.sort((a, b) => Number(b.emphasized) - Number(a.emphasized))
+    projects,
+    education,
+    certifications,
   }
 }
 
-/** Full alignment pass: extract, compare, score, and generate a resume. */
-export function runAlignment(graph: CareerGraph, jobDescription: string): AlignmentResult {
-  const jobSkills = extractJobSkills(jobDescription)
-  const alignments = alignGraph(graph, jobSkills)
-
+/** Compute alignment scoring + buckets for the given job skills. */
+function scoreAlignment(alignments: SkillAlignment[], jobSkills: string[]) {
   const matched = alignments.filter((a) => a.status === "match")
   const partial = alignments.filter((a) => a.status === "partial")
   const gaps = alignments.filter((a) => a.status === "gap")
-
   const score = jobSkills.length
-    ? Math.round(
-        ((matched.length + partial.length * 0.5) / jobSkills.length) * 100,
-      )
+    ? Math.round(((matched.length + partial.length * 0.5) / jobSkills.length) * 100)
     : 0
+  return { matched, partial, gaps, score }
+}
+
+/**
+ * Full alignment pass: extract, compare, score, and generate a resume.
+ */
+export function runAlignment(graph: CareerGraph, jobDescription: string): AlignmentResult {
+  const jobSkills = extractJobSkills(jobDescription)
+  const alignments = alignGraph(graph, jobSkills)
+  const { matched, partial, gaps, score } = scoreAlignment(alignments, jobSkills)
 
   return {
     score,
@@ -229,6 +269,6 @@ export function runAlignment(graph: CareerGraph, jobDescription: string): Alignm
     partial,
     gaps,
     jobSkills,
-    resume: buildResume(graph, jobSkills, alignments),
+    resume: buildResume(graph, jobSkills),
   }
 }

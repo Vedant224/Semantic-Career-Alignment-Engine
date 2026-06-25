@@ -1,25 +1,59 @@
 "use client"
 
-import { useState } from "react"
-import { FileText, Sparkles, Download, Code } from "lucide-react"
+import { useState, useEffect } from "react"
+import { FileText, Sparkles, Download, Code, FileType, Loader2 } from "lucide-react"
 import type { AlignmentResult } from "@/lib/types"
-import { cn } from "@/lib/utils"
-import { generateLatexResume, downloadLatex, generatePdfFromHtml } from "@/lib/latex-generator"
-import { PrintableResume } from "./printable-resume"
+import {
+  generateLatexResume,
+  downloadLatex,
+  downloadResumePdf,
+  compileResumePdf,
+} from "@/lib/latex-generator"
 
 export function ResumePanel({ result }: { result: AlignmentResult | null }) {
   const [isExporting, setIsExporting] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [pdfStatus, setPdfStatus] = useState<"idle" | "loading" | "error">("idle")
+
+  // Compile the true LaTeX PDF whenever the result changes. Revokes old object
+  // URLs to avoid memory leaks.
+  useEffect(() => {
+    if (!result) return
+    let cancelled = false
+    let createdUrl: string | null = null
+    setPdfStatus("loading")
+    compileResumePdf(result)
+      .then((blob) => {
+        if (cancelled) return
+        createdUrl = URL.createObjectURL(blob)
+        setPdfUrl(createdUrl)
+        setPdfStatus("idle")
+      })
+      .catch((error) => {
+        console.log("[v0] PDF preview compile failed:", error)
+        if (!cancelled) setPdfStatus("error")
+      })
+    return () => {
+      cancelled = true
+      if (createdUrl) URL.revokeObjectURL(createdUrl)
+    }
+  }, [result])
 
   const handleDownloadPdf = async () => {
     if (!result) return
     setIsExporting(true)
+    setNotice(null)
     try {
-      const element = document.getElementById("resume-print")
-      if (!element) throw new Error("Printable resume element not found")
-      await generatePdfFromHtml(element, "resume.pdf")
+      const engine = await downloadResumePdf(result, "resume.pdf")
+      if (engine === "fallback") {
+        setNotice(
+          "The LaTeX engine was unreachable, so we generated a built-in PDF instead. Try again shortly for the exact LaTeX version.",
+        )
+      }
     } catch (error) {
       console.error("[v0] PDF download error:", error)
-      alert("Failed to generate PDF. Please try again.")
+      setNotice("Failed to generate PDF. Please try again.")
     } finally {
       setIsExporting(false)
     }
@@ -30,6 +64,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
     const latex = generateLatexResume(result)
     downloadLatex(latex, "resume.tex")
   }
+
   if (!result) {
     return (
       <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center">
@@ -47,8 +82,6 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
     )
   }
 
-  const { resume } = result
-
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="flex items-center justify-between border-b border-border bg-secondary/40 px-6 py-3">
@@ -59,7 +92,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
         <div className="flex gap-2">
           <button
             onClick={handleDownloadLatex}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary/10 text-primary"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
             title="Download as LaTeX file"
           >
             <Code className="h-3.5 w-3.5" aria-hidden="true" />
@@ -68,96 +101,47 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
           <button
             onClick={handleDownloadPdf}
             disabled={isExporting}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-primary/10 text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
             title="Download as PDF"
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            {isExporting ? "Exporting..." : "PDF"}
+            {isExporting ? "Compiling LaTeX..." : "PDF"}
           </button>
         </div>
       </div>
 
-      <div id="resume-content" className="space-y-6 p-6">
-        <header>
-          <h2 className="font-serif text-3xl font-medium tracking-tight text-foreground">
-            {resume.name}
-          </h2>
-          <p className="mt-0.5 text-base text-primary">{resume.headline}</p>
-          <p className="mt-3 text-sm leading-relaxed text-foreground/80">{resume.summary}</p>
-        </header>
+      {notice && (
+        <div className="border-b border-border bg-[color:var(--partial)]/10 px-6 py-2.5 text-xs text-[color:var(--partial-foreground)]">
+          <span className="text-foreground/80">{notice}</span>
+        </div>
+      )}
 
-        <section>
-          <SectionTitle>Core Skills</SectionTitle>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {resume.coreSkills.map((skill, i) => (
-              <span
-                key={skill}
-                className={cn(
-                  "rounded-md px-2 py-1 text-xs font-medium",
-                  i < 4
-                    ? "bg-primary/10 text-primary ring-1 ring-primary/20"
-                    : "bg-muted text-muted-foreground",
-                )}
-              >
-                {skill}
-              </span>
-            ))}
+      {/* True LaTeX-compiled PDF */}
+      <div className="bg-secondary/30 p-4 sm:p-6">
+        {pdfStatus === "loading" && (
+          <div className="flex h-[80vh] flex-col items-center justify-center gap-3 text-muted-foreground">
+            <Loader2 className="h-7 w-7 animate-spin text-primary" aria-hidden="true" />
+            <p className="text-sm">Compiling your resume with LaTeX…</p>
           </div>
-        </section>
-
-        <section>
-          <SectionTitle>Experience</SectionTitle>
-          <div className="mt-3 space-y-5">
-            {resume.experiences.map((exp) => (
-              <article key={`${exp.role}-${exp.company}`}>
-                <div className="flex items-baseline justify-between gap-3">
-                  <h4 className="font-medium text-foreground">
-                    {exp.role}{" "}
-                    <span className="font-normal text-muted-foreground">· {exp.company}</span>
-                  </h4>
-                  <span className="shrink-0 text-xs text-muted-foreground">{exp.period}</span>
-                </div>
-                <ul className="mt-2 space-y-1.5">
-                  {exp.bullets.map((bullet, i) => (
-                    <li
-                      key={i}
-                      className={cn(
-                        "flex gap-2 text-sm leading-relaxed",
-                        bullet.emphasized ? "text-foreground" : "text-foreground/70",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
-                          bullet.emphasized ? "bg-primary" : "bg-border",
-                        )}
-                        aria-hidden="true"
-                      />
-                      <span>
-                        {bullet.text}
-                        {bullet.emphasized && (
-                          <span className="ml-1.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-primary">
-                            JD match
-                          </span>
-                        )}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))}
+        )}
+        {pdfStatus === "error" && (
+          <div className="flex h-[80vh] flex-col items-center justify-center gap-3 px-6 text-center text-muted-foreground">
+            <FileType className="h-8 w-8 text-primary" aria-hidden="true" />
+            <p className="max-w-md text-sm">
+              The LaTeX engine is temporarily unreachable, so the PDF can&apos;t be rendered right
+              now. Use the PDF download button above — it falls back to a built-in generator so you
+              always get a file.
+            </p>
           </div>
-        </section>
+        )}
+        {pdfStatus === "idle" && pdfUrl && (
+          <iframe
+            src={pdfUrl}
+            title="Compiled LaTeX resume PDF"
+            className="h-[80vh] w-full rounded-lg border border-border bg-white shadow-md"
+          />
+        )}
       </div>
-      <PrintableResume result={result} />
     </div>
-  )
-}
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-      {children}
-    </h3>
   )
 }

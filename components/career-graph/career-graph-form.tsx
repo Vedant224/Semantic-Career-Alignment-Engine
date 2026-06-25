@@ -11,9 +11,22 @@ import {
   Wrench,
   BarChart3,
   User,
+  FolderGit2,
+  GraduationCap,
+  Award,
+  Contact as ContactIcon,
 } from "lucide-react"
 import { updateCareerGraph } from "@/app/actions"
-import type { CareerGraph, Experience, Skill } from "@/lib/types"
+import type {
+  CareerGraph,
+  Certification,
+  Education,
+  Experience,
+  Project,
+  Skill,
+  SkillCategory,
+} from "@/lib/types"
+import { SKILL_CATEGORIES } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 const LEVELS: Skill["level"][] = ["Beginner", "Intermediate", "Advanced", "Expert"]
@@ -32,6 +45,11 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
     setSaved(false)
   }
 
+  function updateContact(patch: Partial<CareerGraph["contact"]>) {
+    setGraph((g) => ({ ...g, contact: { ...g.contact, ...patch } }))
+    setSaved(false)
+  }
+
   function save() {
     startTransition(async () => {
       await updateCareerGraph(graph)
@@ -43,7 +61,10 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
   // ----- Skills -----
   function addSkill() {
     update({
-      skills: [...graph.skills, { id: uid("s"), name: "", level: "Intermediate", years: 1 }],
+      skills: [
+        ...graph.skills,
+        { id: uid("s"), name: "", level: "Intermediate", years: 1, category: "Languages" },
+      ],
     })
   }
   function updateSkill(id: string, patch: Partial<Skill>) {
@@ -62,6 +83,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           id: uid("exp"),
           role: "",
           company: "",
+          location: "",
           startDate: "",
           endDate: "",
           description: "",
@@ -92,10 +114,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
     update({
       experiences: graph.experiences.map((e) =>
         e.id === expId
-          ? {
-              ...e,
-              metrics: e.metrics.map((m) => (m.id === metricId ? { ...m, ...patch } : m)),
-            }
+          ? { ...e, metrics: e.metrics.map((m) => (m.id === metricId ? { ...m, ...patch } : m)) }
           : e,
       ),
     })
@@ -106,6 +125,56 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
         e.id === expId ? { ...e, metrics: e.metrics.filter((m) => m.id !== metricId) } : e,
       ),
     })
+  }
+
+  // ----- Projects -----
+  function addProject() {
+    update({
+      projects: [
+        ...graph.projects,
+        { id: uid("proj"), name: "", link: "", techStack: "", highlight: "", description: "" },
+      ],
+    })
+  }
+  function updateProject(id: string, patch: Partial<Project>) {
+    update({ projects: graph.projects.map((p) => (p.id === id ? { ...p, ...patch } : p)) })
+  }
+  function removeProject(id: string) {
+    update({ projects: graph.projects.filter((p) => p.id !== id) })
+  }
+
+  // ----- Education -----
+  function addEducation() {
+    update({
+      education: [
+        ...graph.education,
+        { id: uid("edu"), institution: "", degree: "", location: "", startDate: "", endDate: "" },
+      ],
+    })
+  }
+  function updateEducation(id: string, patch: Partial<Education>) {
+    update({ education: graph.education.map((e) => (e.id === id ? { ...e, ...patch } : e)) })
+  }
+  function removeEducation(id: string) {
+    update({ education: graph.education.filter((e) => e.id !== id) })
+  }
+
+  // ----- Certifications -----
+  function addCertification() {
+    update({
+      certifications: [
+        ...graph.certifications,
+        { id: uid("cert"), name: "", issuer: "", link: "" },
+      ],
+    })
+  }
+  function updateCertification(id: string, patch: Partial<Certification>) {
+    update({
+      certifications: graph.certifications.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    })
+  }
+  function removeCertification(id: string) {
+    update({ certifications: graph.certifications.filter((c) => c.id !== id) })
   }
 
   return (
@@ -128,22 +197,65 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
             />
           </Field>
         </div>
-        <Field label="Professional summary">
-          <textarea
-            value={graph.summary}
-            onChange={(e) => update({ summary: e.target.value })}
-            rows={3}
-            placeholder="A short summary of who you are and what you do best."
-            className="w-full resize-none rounded-lg border border-input bg-background/60 p-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-4 focus:ring-ring/20"
-          />
-        </Field>
+      </Card>
+
+      {/* Contact & Links */}
+      <Card
+        icon={ContactIcon}
+        title="Contact & Links"
+        subtitle="These appear under your name in the resume header"
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Email">
+            <Input
+              value={graph.contact.email}
+              onChange={(v) => updateContact({ email: v })}
+              placeholder="you@example.com"
+            />
+          </Field>
+          <Field label="Phone">
+            <Input
+              value={graph.contact.phone}
+              onChange={(v) => updateContact({ phone: v })}
+              placeholder="+1 (555) 123-4567"
+            />
+          </Field>
+          <Field label="Location">
+            <Input
+              value={graph.contact.location}
+              onChange={(v) => updateContact({ location: v })}
+              placeholder="Seattle, WA"
+            />
+          </Field>
+          <Field label="Personal website">
+            <Input
+              value={graph.contact.website}
+              onChange={(v) => updateContact({ website: v })}
+              placeholder="https://yourname.dev"
+            />
+          </Field>
+          <Field label="GitHub">
+            <Input
+              value={graph.contact.github}
+              onChange={(v) => updateContact({ github: v })}
+              placeholder="https://github.com/username"
+            />
+          </Field>
+          <Field label="LinkedIn">
+            <Input
+              value={graph.contact.linkedin}
+              onChange={(v) => updateContact({ linkedin: v })}
+              placeholder="https://linkedin.com/in/username"
+            />
+          </Field>
+        </div>
       </Card>
 
       {/* Skills */}
       <Card
         icon={Wrench}
         title="Skills"
-        subtitle="Each skill becomes a node in your graph and a vector for matching"
+        subtitle="Categorized skills become nodes in your graph and vectors for matching"
         action={<AddButton label="Add skill" onClick={addSkill} />}
       >
         <div className="space-y-2.5">
@@ -151,24 +263,23 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           {graph.skills.map((skill) => (
             <div
               key={skill.id}
-              className="grid grid-cols-1 gap-2 rounded-lg border border-border bg-secondary/30 p-2.5 sm:grid-cols-[1fr_auto_auto_auto]"
+              className="grid grid-cols-1 gap-2 rounded-lg border border-border bg-secondary/30 p-2.5 sm:grid-cols-[1fr_auto_auto_auto_auto]"
             >
               <Input
                 value={skill.name}
                 onChange={(v) => updateSkill(skill.id, { name: v })}
                 placeholder="e.g. PostgreSQL"
               />
-              <select
+              <Select
+                value={skill.category}
+                onChange={(v) => updateSkill(skill.id, { category: v as SkillCategory })}
+                options={SKILL_CATEGORIES}
+              />
+              <Select
                 value={skill.level}
-                onChange={(e) => updateSkill(skill.id, { level: e.target.value as Skill["level"] })}
-                className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/20"
-              >
-                {LEVELS.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => updateSkill(skill.id, { level: v as Skill["level"] })}
+                options={LEVELS}
+              />
               <div className="flex items-center gap-1.5">
                 <input
                   type="number"
@@ -213,20 +324,29 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
                       placeholder="Northwind Labs"
                     />
                   </Field>
-                  <Field label="Start">
+                  <Field label="Location">
                     <Input
-                      value={exp.startDate}
-                      onChange={(v) => updateExperience(exp.id, { startDate: v })}
-                      placeholder="2021"
+                      value={exp.location}
+                      onChange={(v) => updateExperience(exp.id, { location: v })}
+                      placeholder="Remote"
                     />
                   </Field>
-                  <Field label="End">
-                    <Input
-                      value={exp.endDate}
-                      onChange={(v) => updateExperience(exp.id, { endDate: v })}
-                      placeholder="Present"
-                    />
-                  </Field>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Start">
+                      <Input
+                        value={exp.startDate}
+                        onChange={(v) => updateExperience(exp.id, { startDate: v })}
+                        placeholder="2021"
+                      />
+                    </Field>
+                    <Field label="End">
+                      <Input
+                        value={exp.endDate}
+                        onChange={(v) => updateExperience(exp.id, { endDate: v })}
+                        placeholder="Present"
+                      />
+                    </Field>
+                  </div>
                 </div>
                 <IconButton label="Remove role" onClick={() => removeExperience(exp.id)} />
               </div>
@@ -236,8 +356,8 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
                   value={exp.description}
                   onChange={(e) => updateExperience(exp.id, { description: e.target.value })}
                   rows={3}
-                  placeholder="Describe what you built and the impact you had. Mention specific technologies."
-                  className="w-full resize-none rounded-lg border border-input bg-background/60 p-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-4 focus:ring-ring/20"
+                  placeholder="Describe what you built and the impact you had. Each sentence becomes a bullet."
+                  className={textareaClass}
                 />
               </Field>
 
@@ -281,10 +401,165 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
         </div>
       </Card>
 
+      {/* Projects */}
+      <Card
+        icon={FolderGit2}
+        title="Projects"
+        subtitle="Standout builds — JD-relevant projects are surfaced first on your resume"
+        action={<AddButton label="Add project" onClick={addProject} />}
+      >
+        <div className="space-y-4">
+          {graph.projects.length === 0 && <Empty>No projects yet.</Empty>}
+          {graph.projects.map((project) => (
+            <div key={project.id} className="rounded-xl border border-border bg-secondary/20 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="grid flex-1 gap-3 sm:grid-cols-2">
+                  <Field label="Project name">
+                    <Input
+                      value={project.name}
+                      onChange={(v) => updateProject(project.id, { name: v })}
+                      placeholder="Semantic Search Platform"
+                    />
+                  </Field>
+                  <Field label="Link (optional)">
+                    <Input
+                      value={project.link}
+                      onChange={(v) => updateProject(project.id, { link: v })}
+                      placeholder="https://github.com/you/project"
+                    />
+                  </Field>
+                  <Field label="Tech stack">
+                    <Input
+                      value={project.techStack}
+                      onChange={(v) => updateProject(project.id, { techStack: v })}
+                      placeholder="Next.js, PostgreSQL, pgvector"
+                    />
+                  </Field>
+                  <Field label="Highlight (optional)">
+                    <Input
+                      value={project.highlight}
+                      onChange={(v) => updateProject(project.id, { highlight: v })}
+                      placeholder="Hackathon finalist, 5 teams adopted, etc."
+                    />
+                  </Field>
+                </div>
+                <IconButton label="Remove project" onClick={() => removeProject(project.id)} />
+              </div>
+              <Field label="Description" className="mt-3">
+                <textarea
+                  value={project.description}
+                  onChange={(e) => updateProject(project.id, { description: e.target.value })}
+                  rows={3}
+                  placeholder="What you built and the impact. Each sentence becomes a bullet."
+                  className={textareaClass}
+                />
+              </Field>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Education */}
+      <Card
+        icon={GraduationCap}
+        title="Education"
+        subtitle="Degrees and institutions"
+        action={<AddButton label="Add education" onClick={addEducation} />}
+      >
+        <div className="space-y-4">
+          {graph.education.length === 0 && <Empty>No education entries yet.</Empty>}
+          {graph.education.map((edu) => (
+            <div key={edu.id} className="rounded-xl border border-border bg-secondary/20 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="grid flex-1 gap-3 sm:grid-cols-2">
+                  <Field label="Institution">
+                    <Input
+                      value={edu.institution}
+                      onChange={(v) => updateEducation(edu.id, { institution: v })}
+                      placeholder="University of Washington"
+                    />
+                  </Field>
+                  <Field label="Degree">
+                    <Input
+                      value={edu.degree}
+                      onChange={(v) => updateEducation(edu.id, { degree: v })}
+                      placeholder="B.S. in Computer Science"
+                    />
+                  </Field>
+                  <Field label="Location">
+                    <Input
+                      value={edu.location}
+                      onChange={(v) => updateEducation(edu.id, { location: v })}
+                      placeholder="Seattle, WA"
+                    />
+                  </Field>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Start">
+                      <Input
+                        value={edu.startDate}
+                        onChange={(v) => updateEducation(edu.id, { startDate: v })}
+                        placeholder="2014"
+                      />
+                    </Field>
+                    <Field label="End">
+                      <Input
+                        value={edu.endDate}
+                        onChange={(v) => updateEducation(edu.id, { endDate: v })}
+                        placeholder="2018"
+                      />
+                    </Field>
+                  </div>
+                </div>
+                <IconButton label="Remove education" onClick={() => removeEducation(edu.id)} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Certifications */}
+      <Card
+        icon={Award}
+        title="Achievements & Certifications"
+        subtitle="Credentials, awards, and recognitions"
+        action={<AddButton label="Add certification" onClick={addCertification} />}
+      >
+        <div className="space-y-2.5">
+          {graph.certifications.length === 0 && <Empty>No certifications yet.</Empty>}
+          {graph.certifications.map((cert) => (
+            <div
+              key={cert.id}
+              className="grid grid-cols-1 gap-2 rounded-lg border border-border bg-secondary/30 p-2.5 sm:grid-cols-[1.4fr_1fr_1fr_auto]"
+            >
+              <Input
+                value={cert.name}
+                onChange={(v) => updateCertification(cert.id, { name: v })}
+                placeholder="AWS Certified Solutions Architect"
+              />
+              <Input
+                value={cert.issuer}
+                onChange={(v) => updateCertification(cert.id, { issuer: v })}
+                placeholder="Amazon Web Services"
+              />
+              <Input
+                value={cert.link}
+                onChange={(v) => updateCertification(cert.id, { link: v })}
+                placeholder="Credential URL (optional)"
+              />
+              <IconButton
+                label="Remove certification"
+                onClick={() => removeCertification(cert.id)}
+              />
+            </div>
+          ))}
+        </div>
+      </Card>
+
       {/* Save bar */}
       <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-2xl border border-border glass-panel px-5 py-3.5 shadow-lg shadow-primary/5">
         <p className="text-sm text-muted-foreground">
-          {graph.skills.length} skills · {graph.experiences.length} roles in your graph
+          {graph.skills.length} skills · {graph.experiences.length} roles · {graph.projects.length}{" "}
+          projects
         </p>
         <button
           type="button"
@@ -311,6 +586,9 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 }
 
 /* ---------- small primitives ---------- */
+
+const textareaClass =
+  "w-full resize-none rounded-lg border border-input bg-background/60 p-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-4 focus:ring-ring/20"
 
 function Card({
   icon: Icon,
@@ -378,6 +656,30 @@ function Input({
       placeholder={placeholder}
       className="w-full rounded-lg border border-input bg-background/60 px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-4 focus:ring-ring/20"
     />
+  )
+}
+
+function Select({
+  value,
+  onChange,
+  options,
+}: {
+  value: string
+  onChange: (v: string) => void
+  options: readonly string[]
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/20"
+    >
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </select>
   )
 }
 
