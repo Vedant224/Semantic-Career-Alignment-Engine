@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { FileText, Sparkles, Download, Code } from "lucide-react"
+import { FileText, Sparkles, Download, Code, ExternalLink } from "lucide-react"
 import type { AlignmentResult } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { generateLatexResume, downloadLatex, generateResumePdf } from "@/lib/latex-generator"
@@ -80,71 +80,153 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
             {resume.name}
           </h2>
           <p className="mt-0.5 text-base text-primary">{resume.headline}</p>
-          <p className="mt-3 text-sm leading-relaxed text-foreground/80">{resume.summary}</p>
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-primary/15 bg-primary/5 p-3">
+            <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
+            <p className="text-sm leading-relaxed text-foreground/80">{resume.summary}</p>
+          </div>
         </header>
 
-        <section>
-          <SectionTitle>Core Skills</SectionTitle>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {resume.coreSkills.map((skill, i) => (
-              <span
-                key={skill}
-                className={cn(
-                  "rounded-md px-2 py-1 text-xs font-medium",
-                  i < 4
-                    ? "bg-primary/10 text-primary ring-1 ring-primary/20"
-                    : "bg-muted text-muted-foreground",
-                )}
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        </section>
+        {resume.skillGroups.length > 0 && (
+          <section>
+            <SectionTitle>Technical Skills</SectionTitle>
+            <div className="mt-3 space-y-2.5">
+              {resume.skillGroups.map((group) => (
+                <div key={group.label} className="flex flex-col gap-1.5 sm:flex-row sm:gap-3">
+                  <span className="shrink-0 pt-1 text-xs font-semibold text-foreground sm:w-32">
+                    {group.label}
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.items.map((skill) => (
+                      <span
+                        key={skill}
+                        className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section>
-          <SectionTitle>Experience</SectionTitle>
+          <SectionTitle>Professional Experience</SectionTitle>
           <div className="mt-3 space-y-5">
             {resume.experiences.map((exp) => (
               <article key={`${exp.role}-${exp.company}`}>
                 <div className="flex items-baseline justify-between gap-3">
                   <h4 className="font-medium text-foreground">
-                    {exp.role}{" "}
-                    <span className="font-normal text-muted-foreground">· {exp.company}</span>
+                    {exp.company}
+                    {exp.location && (
+                      <span className="font-normal text-muted-foreground"> · {exp.location}</span>
+                    )}
                   </h4>
                   <span className="shrink-0 text-xs text-muted-foreground">{exp.period}</span>
                 </div>
+                <p className="text-sm italic text-muted-foreground">{exp.role}</p>
                 <ul className="mt-2 space-y-1.5">
                   {exp.bullets.map((bullet, i) => (
-                    <li
-                      key={i}
-                      className={cn(
-                        "flex gap-2 text-sm leading-relaxed",
-                        bullet.emphasized ? "text-foreground" : "text-foreground/70",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
-                          bullet.emphasized ? "bg-primary" : "bg-border",
-                        )}
-                        aria-hidden="true"
-                      />
-                      <span>
-                        {bullet.text}
-                        {bullet.emphasized && (
-                          <span className="ml-1.5 inline-flex items-center whitespace-nowrap rounded-full bg-primary/10 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/20">
-                            JD&nbsp;match
-                          </span>
-                        )}
-                      </span>
-                    </li>
+                    <Bullet key={i} bullet={bullet} />
                   ))}
                 </ul>
               </article>
             ))}
           </div>
         </section>
+
+        {resume.projects.length > 0 && (
+          <section>
+            <SectionTitle>Technical Projects</SectionTitle>
+            <div className="mt-3 space-y-5">
+              {resume.projects.map((proj) => (
+                <article key={proj.name}>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h4 className="font-medium text-foreground">
+                      {proj.name}
+                      {proj.link && (
+                        <a
+                          href={proj.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-1.5 inline-flex items-center gap-0.5 align-middle text-xs font-medium text-primary hover:underline"
+                        >
+                          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                          <span className="sr-only">Open {proj.name}</span>
+                        </a>
+                      )}
+                    </h4>
+                  </div>
+                  {proj.techStack && (
+                    <p className="text-xs italic text-muted-foreground">{proj.techStack}</p>
+                  )}
+                  {proj.highlight && (
+                    <p className="mt-0.5 text-xs font-medium text-primary">{proj.highlight}</p>
+                  )}
+                  <ul className="mt-2 space-y-1.5">
+                    {proj.bullets.map((bullet, i) => (
+                      <Bullet key={i} bullet={bullet} />
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {resume.education.length > 0 && (
+          <section>
+            <SectionTitle>Education</SectionTitle>
+            <div className="mt-3 space-y-3">
+              {resume.education.map((edu) => (
+                <div key={`${edu.institution}-${edu.degree}`}>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h4 className="font-medium text-foreground">
+                      {edu.institution}
+                      {edu.location && (
+                        <span className="font-normal text-muted-foreground"> · {edu.location}</span>
+                      )}
+                    </h4>
+                    <span className="shrink-0 text-xs text-muted-foreground">{edu.period}</span>
+                  </div>
+                  <p className="text-sm italic text-muted-foreground">{edu.degree}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {resume.certifications.length > 0 && (
+          <section>
+            <SectionTitle>Achievements &amp; Certifications</SectionTitle>
+            <ul className="mt-3 space-y-1.5">
+              {resume.certifications.map((cert) => (
+                <li key={cert.name} className="flex gap-2 text-sm leading-relaxed text-foreground/80">
+                  <span
+                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    <span className="font-medium text-foreground">{cert.name}</span>
+                    {cert.issuer && <span className="text-muted-foreground"> — {cert.issuer}</span>}
+                    {cert.link && (
+                      <a
+                        href={cert.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-1.5 inline-flex items-center gap-0.5 align-middle text-xs font-medium text-primary hover:underline"
+                      >
+                        <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                        Credential
+                      </a>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
     </div>
   )
@@ -152,8 +234,35 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+    <h3 className="border-b border-border pb-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
       {children}
     </h3>
+  )
+}
+
+function Bullet({ bullet }: { bullet: { text: string; emphasized: boolean } }) {
+  return (
+    <li
+      className={cn(
+        "flex gap-2 text-sm leading-relaxed",
+        bullet.emphasized ? "text-foreground" : "text-foreground/70",
+      )}
+    >
+      <span
+        className={cn(
+          "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
+          bullet.emphasized ? "bg-primary" : "bg-border",
+        )}
+        aria-hidden="true"
+      />
+      <span>
+        {bullet.text}
+        {bullet.emphasized && (
+          <span className="ml-1.5 inline-flex items-center whitespace-nowrap rounded-full bg-primary/10 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/20">
+            JD&nbsp;match
+          </span>
+        )}
+      </span>
+    </li>
   )
 }

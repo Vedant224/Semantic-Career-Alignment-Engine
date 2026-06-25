@@ -1,4 +1,4 @@
-import type { AlignmentResult } from "./types"
+import type { AlignmentResult, GeneratedResume } from "./types"
 
 // Escape special LaTeX characters.
 function escapeLatex(str: string): string {
@@ -16,24 +16,28 @@ function escapeLatex(str: string): string {
 export function generateLatexResume(result: AlignmentResult): string {
   const { resume } = result
 
-  // Split skills into two categories so the section reads cleanly.
-  const half = Math.ceil(resume.coreSkills.length / 2)
-  const primarySkills = resume.coreSkills.slice(0, half).map(escapeLatex).join(", ")
-  const secondarySkills = resume.coreSkills.slice(half).map(escapeLatex).join(", ")
+  // ----- Technical Skills (grouped by category) -----
+  const skillsLines = resume.skillGroups
+    .filter((g) => g.items.length > 0)
+    .map(
+      (g) =>
+        `     \\textbf{${escapeLatex(g.label)}:} ${g.items.map(escapeLatex).join(", ")} \\\\`,
+    )
+    .join("\n")
 
-  let skillsContent = ""
-  if (primarySkills) {
-    skillsContent += `\\textbf{Core Competencies:} ${primarySkills}`
-    if (secondarySkills) skillsContent += " \\\\\n     "
-  }
-  if (secondarySkills) {
-    skillsContent += `\\textbf{Supporting Skills:} ${secondarySkills}`
-  }
+  const skillsContent = skillsLines
+    ? `\\begin{itemize}[leftmargin=0.15in, label={}]
+    \\small{\\item{
+${skillsLines}
+     }}
+ \\end{itemize}`
+    : ""
 
-  // Build experience entries.
+  // ----- Professional Experience -----
   let experienceContent = ""
   resume.experiences.forEach((exp) => {
-    experienceContent += `    \\resumeSubheading\n      {${escapeLatex(exp.company)}}{${escapeLatex(exp.period)}}\n      {${escapeLatex(exp.role)}}{}\n`
+    const heading = exp.location ? `${exp.company} -- ${exp.location}` : exp.company
+    experienceContent += `    \\resumeSubheading\n      {${escapeLatex(heading)}}{${escapeLatex(exp.period)}}\n      {${escapeLatex(exp.role)}}{}\n`
     experienceContent += `      \\resumeItemListStart\n`
     exp.bullets.forEach((bullet) => {
       const text = escapeLatex(bullet.text)
@@ -43,6 +47,93 @@ export function generateLatexResume(result: AlignmentResult): string {
     })
     experienceContent += `      \\resumeItemListEnd\n`
   })
+
+  // ----- Technical Projects -----
+  let projectsContent = ""
+  resume.projects.forEach((proj) => {
+    const stack = proj.techStack ? ` $|$ \\emph{${escapeLatex(proj.techStack)}}` : ""
+    const nameNode = proj.link
+      ? `\\href{${proj.link}}{\\textbf{${escapeLatex(proj.name)}}}`
+      : `\\textbf{${escapeLatex(proj.name)}}`
+    const linkNode = proj.link ? `\\href{${proj.link}}{\\textcolor{custom2}{LINK}}` : ""
+    projectsContent += `      \\resumeProjectHeading\n          {${nameNode}${stack}}{${linkNode}}\n`
+    if (proj.highlight) {
+      projectsContent += `          \\\\[3pt]\n          \\small{${escapeLatex(proj.highlight)}}\n`
+    }
+    projectsContent += `          \\resumeItemListStart\n`
+    proj.bullets.forEach((bullet) => {
+      const text = escapeLatex(bullet.text)
+      projectsContent += bullet.emphasized
+        ? `            \\resumeItem{\\textcolor{custom2}{${text}}}\n`
+        : `            \\resumeItem{${text}}\n`
+    })
+    projectsContent += `          \\resumeItemListEnd\n`
+  })
+
+  // ----- Education -----
+  let educationContent = ""
+  resume.education.forEach((edu) => {
+    const heading = edu.location ? `${edu.institution} -- ${edu.location}` : edu.institution
+    educationContent += `    \\resumeSubheading\n      {${escapeLatex(heading)}}{${escapeLatex(edu.period)}}\n      {${escapeLatex(edu.degree)}}{}\n`
+  })
+
+  // ----- Achievements & Certifications -----
+  let certsContent = ""
+  resume.certifications.forEach((cert) => {
+    const issuer = cert.issuer ? ` -- ${escapeLatex(cert.issuer)}` : ""
+    const credential = cert.link ? ` -- \\href{${cert.link}}{\\textcolor{custom2}{Credential}}` : ""
+    certsContent += `            \\resumeItem{\\textbf{${escapeLatex(cert.name)}}${issuer}${credential}}\n`
+  })
+
+  // Assemble optional sections.
+  const sections: string[] = []
+
+  sections.push(`%-----------PROFESSIONAL SUMMARY-----------
+\\section{\\textcolor{custom1}{Professional Summary}}
+    \\resumeSubHeadingListStart
+    \\small{${escapeLatex(resume.summary)}}
+    \\resumeSubHeadingListEnd`)
+
+  if (skillsContent) {
+    sections.push(`%-----------TECHNICAL SKILLS-----------
+\\vspace{-13pt}
+\\section{\\textcolor{custom1}{Technical Skills}}
+ ${skillsContent}`)
+  }
+
+  if (experienceContent) {
+    sections.push(`%-----------PROFESSIONAL EXPERIENCE-----------
+\\vspace{-13pt}
+\\section{\\textcolor{custom1}{Professional Experience}}
+  \\resumeSubHeadingListStart
+${experienceContent}  \\resumeSubHeadingListEnd`)
+  }
+
+  if (projectsContent) {
+    sections.push(`%-----------PROJECTS-----------
+\\vspace{-13pt}
+\\section{\\textcolor{custom1}{Technical Projects}}
+    \\resumeSubHeadingListStart
+${projectsContent}    \\resumeSubHeadingListEnd`)
+  }
+
+  if (educationContent) {
+    sections.push(`%-----------EDUCATION-----------
+\\vspace{-13pt}
+\\section{\\textcolor{custom1}{Education}}
+  \\resumeSubHeadingListStart
+${educationContent}  \\resumeSubHeadingListEnd`)
+  }
+
+  if (certsContent) {
+    sections.push(`%-----------ACHIEVEMENTS & CERTIFICATIONS-----------
+\\vspace{-13pt}
+\\section{\\textcolor{custom1}{Achievements \\& Certifications}}
+    \\resumeSubHeadingListStart
+        \\resumeItemListStart
+${certsContent}        \\resumeItemListEnd
+    \\resumeSubHeadingListEnd`)
+  }
 
   return `%-------------------------
 % ATS-Optimized Resume in LaTeX
@@ -110,6 +201,13 @@ export function generateLatexResume(result: AlignmentResult): string {
     \\end{tabular*}\\vspace{-7pt}
 }
 
+\\newcommand{\\resumeProjectHeading}[2]{
+    \\item
+    \\begin{tabular*}{1.001\\textwidth}{l@{\\extracolsep{\\fill}}r}
+      \\small#1 & \\textbf{\\small #2}\\\\
+    \\end{tabular*}\\vspace{-7pt}
+}
+
 \\renewcommand\\labelitemi{$$\\vcenter{\\hbox{\\tiny$$\\bullet$$}}$$}
 \\renewcommand\\labelitemii{$$\\vcenter{\\hbox{\\tiny$$\\bullet$$}}$$}
 
@@ -130,26 +228,7 @@ export function generateLatexResume(result: AlignmentResult): string {
     \\vspace{-5pt}
 \\end{center}
 
-%-----------PROFESSIONAL SUMMARY-----------
-\\section{\\textcolor{custom1}{Professional Summary}}
-    \\resumeSubHeadingListStart
-    \\small{${escapeLatex(resume.summary)}}
-    \\resumeSubHeadingListEnd
-
-%-----------TECHNICAL SKILLS-----------
-\\vspace{-13pt}
-\\section{\\textcolor{custom1}{Technical Skills}}
- \\begin{itemize}[leftmargin=0.15in, label={}]
-    \\small{\\item{
-     ${skillsContent} \\\\
-     }}
- \\end{itemize}
-
-%-----------PROFESSIONAL EXPERIENCE-----------
-\\vspace{-13pt}
-\\section{\\textcolor{custom1}{Professional Experience}}
-  \\resumeSubHeadingListStart
-${experienceContent}  \\resumeSubHeadingListEnd
+${sections.join("\n\n")}
 
 \\end{document}
 `
@@ -169,151 +248,261 @@ export function downloadLatex(content: string, filename = "resume.tex"): void {
 const NAVY: [number, number, number] = [10, 48, 97]
 const ROYAL: [number, number, number] = [37, 99, 235]
 const BODY: [number, number, number] = [31, 41, 55]
-const MUTED: [number, number, number] = [75, 85, 99]
+const MUTED: [number, number, number] = [90, 100, 115]
 
 /**
  * Generate a crisp, selectable, lightweight (compressed) vector PDF that
  * mirrors the LaTeX template layout. No rasterization — text stays sharp and
- * the file size stays tiny. Auto-scales font size to keep it to a single page.
+ * the file stays tiny. Auto-scales to fit content and paginates when needed.
  */
 export async function generateResumePdf(result: AlignmentResult, filename = "resume.pdf"): Promise<void> {
   const { jsPDF } = await import("jspdf")
   const { resume } = result
 
-  // A4 page, compression enabled for small file size.
-  const pageW = 210
-  const pageH = 297
-  const marginX = 18
+  // Letter page (matches the LaTeX template), compression on for small files.
+  const pageW = 215.9
+  const pageH = 279.4
+  const marginX = 16
   const usableW = pageW - marginX * 2
 
-  // Try progressively smaller scales until everything fits on one page.
-  const scales = [1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7]
-  for (let s = 0; s < scales.length; s++) {
-    const scale = scales[s]
-    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true })
-    const fit = renderResume(doc, resume, { pageW, pageH, marginX, usableW, scale })
-    if (fit || s === scales.length - 1) {
+  // Try scales until it fits on a single page; otherwise paginate at smallest.
+  const scales = [1, 0.94, 0.88, 0.82, 0.78]
+  for (let i = 0; i < scales.length; i++) {
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "letter", compress: true })
+    const pages = renderResume(doc, resume, { pageW, pageH, marginX, usableW, scale: scales[i] })
+    if (pages === 1 || i === scales.length - 1) {
       doc.save(filename)
       return
     }
   }
 }
 
-type Resume = AlignmentResult["resume"]
-
 function renderResume(
   doc: import("jspdf").jsPDF,
-  resume: Resume,
+  resume: GeneratedResume,
   cfg: { pageW: number; pageH: number; marginX: number; usableW: number; scale: number },
-): boolean {
+): number {
   const { pageW, pageH, marginX, usableW, scale } = cfg
-  const bottomLimit = pageH - 16
-  let y = 20
+  const topMargin = 16
+  const bottomLimit = pageH - 14
+  let y = topMargin
+  let pages = 1
 
   const fs = (pt: number) => pt * scale
-  const lh = (pt: number) => (pt * scale) / 2.6 // approximate line height in mm
+  const lh = (pt: number) => (pt * scale) / 2.6 // approx line height (mm)
+  const strW = (text: string, pt: number) => (doc.getStringUnitWidth(text) * fs(pt)) / 2.83
 
-  // ---- Heading: name (centered, navy) ----
+  const ensureSpace = (needed: number) => {
+    if (y + needed > bottomLimit) {
+      doc.addPage()
+      pages += 1
+      y = topMargin
+    }
+  }
+
+  // ---- Heading ----
   doc.setFont("helvetica", "bold")
-  doc.setFontSize(fs(22))
+  doc.setFontSize(fs(20))
   doc.setTextColor(...NAVY)
   doc.text(resume.name.toUpperCase(), pageW / 2, y, { align: "center" })
-  y += lh(22) + 1
+  y += lh(20) + 1
 
   if (resume.headline) {
     doc.setFont("helvetica", "normal")
     doc.setFontSize(fs(10.5))
     doc.setTextColor(...ROYAL)
     doc.text(resume.headline, pageW / 2, y, { align: "center" })
-    y += lh(10.5) + 2
+    y += lh(10.5) + 1.5
   }
 
   const section = (title: string) => {
+    ensureSpace(12)
     y += 3
     doc.setFont("helvetica", "bold")
-    doc.setFontSize(fs(12))
+    doc.setFontSize(fs(11.5))
     doc.setTextColor(...NAVY)
     doc.text(title.toUpperCase(), marginX, y)
-    y += 1.5
+    y += 1.6
     doc.setDrawColor(...NAVY)
-    doc.setLineWidth(0.4)
+    doc.setLineWidth(0.35)
     doc.line(marginX, y, pageW - marginX, y)
     y += 4
   }
 
-  const paragraph = (text: string, pt: number, color: [number, number, number], style: "normal" | "italic" | "bold" = "normal") => {
+  const paragraph = (text: string, pt: number, color: [number, number, number], style: "normal" | "italic" = "normal") => {
     doc.setFont("helvetica", style)
     doc.setFontSize(fs(pt))
     doc.setTextColor(...color)
     const lines = doc.splitTextToSize(text, usableW)
     for (const line of lines) {
+      ensureSpace(lh(pt) + 1)
       doc.text(line, marginX, y)
       y += lh(pt) + 0.6
     }
   }
 
+  // Render a bullet with a leading dot and JD emphasis color.
+  const bullet = (text: string, emphasized: boolean) => {
+    const pt = 9.5
+    doc.setFont("helvetica", emphasized ? "bold" : "normal")
+    doc.setFontSize(fs(pt))
+    doc.setTextColor(...(emphasized ? ROYAL : BODY))
+    const indent = marginX + 4
+    const lines = doc.splitTextToSize(text, usableW - 4)
+    lines.forEach((line: string, idx: number) => {
+      ensureSpace(lh(pt) + 1)
+      if (idx === 0) {
+        doc.setTextColor(...(emphasized ? ROYAL : MUTED))
+        doc.text("\u2022", marginX + 1, y)
+        doc.setTextColor(...(emphasized ? ROYAL : BODY))
+      }
+      doc.text(line, indent, y)
+      y += lh(pt) + 0.5
+    })
+  }
+
   // ---- Professional Summary ----
   section("Professional Summary")
-  paragraph(resume.summary, 10, BODY)
+  paragraph(resume.summary, 9.5, BODY)
 
   // ---- Technical Skills ----
-  const half = Math.ceil(resume.coreSkills.length / 2)
-  const primary = resume.coreSkills.slice(0, half)
-  const secondary = resume.coreSkills.slice(half)
-  section("Technical Skills")
-
-  const skillLine = (label: string, items: string[]) => {
-    if (items.length === 0) return
-    doc.setFontSize(fs(10))
-    doc.setFont("helvetica", "bold")
-    doc.setTextColor(...NAVY)
-    const labelText = `${label}: `
-    const labelW = (doc.getStringUnitWidth(labelText) * fs(10)) / 2.83
-    doc.text(labelText, marginX, y)
-    doc.setFont("helvetica", "normal")
-    doc.setTextColor(...BODY)
-    const lines = doc.splitTextToSize(items.join(", "), usableW - labelW)
-    lines.forEach((line: string, i: number) => {
-      doc.text(line, i === 0 ? marginX + labelW : marginX, y)
-      if (i < lines.length - 1) y += lh(10) + 0.6
-    })
-    y += lh(10) + 1.4
+  const skillGroups = resume.skillGroups.filter((g) => g.items.length > 0)
+  if (skillGroups.length > 0) {
+    section("Technical Skills")
+    const pt = 9.5
+    for (const group of skillGroups) {
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(fs(pt))
+      doc.setTextColor(...NAVY)
+      const labelText = `${group.label}: `
+      const labelW = strW(labelText, pt)
+      const lines = doc.splitTextToSize(group.items.join(", "), usableW - labelW)
+      ensureSpace(lh(pt) + 1)
+      doc.text(labelText, marginX, y)
+      doc.setFont("helvetica", "normal")
+      doc.setTextColor(...BODY)
+      lines.forEach((line: string, i: number) => {
+        if (i > 0) {
+          ensureSpace(lh(pt) + 1)
+        }
+        doc.text(line, i === 0 ? marginX + labelW : marginX, y)
+        if (i < lines.length - 1) y += lh(pt) + 0.5
+      })
+      y += lh(pt) + 1.2
+    }
   }
-  skillLine("Core Competencies", primary)
-  skillLine("Supporting Skills", secondary)
 
   // ---- Professional Experience ----
-  section("Professional Experience")
-  resume.experiences.forEach((exp, idx) => {
-    // company (bold, left) + period (bold, right)
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(fs(11))
-    doc.setTextColor(...BODY)
-    doc.text(exp.company, marginX, y)
-    doc.text(exp.period, pageW - marginX, y, { align: "right" })
-    y += lh(11) + 0.6
-    // role (italic)
-    doc.setFont("helvetica", "italic")
-    doc.setFontSize(fs(10))
-    doc.setTextColor(...MUTED)
-    doc.text(exp.role, marginX, y)
-    y += lh(10) + 1
-    // bullets
-    exp.bullets.forEach((b) => {
-      const color = b.emphasized ? ROYAL : BODY
-      doc.setFont("helvetica", b.emphasized ? "bold" : "normal")
-      doc.setFontSize(fs(10))
-      doc.setTextColor(...color)
-      const bulletIndent = marginX + 4
-      const lines = doc.splitTextToSize(b.text, usableW - 4)
-      doc.text("\u2022", marginX + 1, y)
-      lines.forEach((line: string) => {
-        doc.text(line, bulletIndent, y)
-        y += lh(10) + 0.5
-      })
+  if (resume.experiences.length > 0) {
+    section("Professional Experience")
+    resume.experiences.forEach((exp, idx) => {
+      ensureSpace(lh(11) + lh(10) + 4)
+      const heading = exp.location ? `${exp.company}  •  ${exp.location}` : exp.company
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(fs(10.5))
+      doc.setTextColor(...BODY)
+      doc.text(heading, marginX, y)
+      doc.text(exp.period, pageW - marginX, y, { align: "right" })
+      y += lh(10.5) + 0.4
+      doc.setFont("helvetica", "italic")
+      doc.setFontSize(fs(9.5))
+      doc.setTextColor(...MUTED)
+      doc.text(exp.role, marginX, y)
+      y += lh(9.5) + 1
+      exp.bullets.forEach((b) => bullet(b.text, b.emphasized))
+      if (idx < resume.experiences.length - 1) y += 1.8
     })
-    if (idx < resume.experiences.length - 1) y += 2
-  })
+  }
 
-  return y <= bottomLimit
+  // ---- Technical Projects ----
+  if (resume.projects.length > 0) {
+    section("Technical Projects")
+    resume.projects.forEach((proj, idx) => {
+      ensureSpace(lh(10.5) + 4)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(fs(10.5))
+      doc.setTextColor(...BODY)
+      doc.text(proj.name, marginX, y)
+      if (proj.link) {
+        doc.setFont("helvetica", "bold")
+        doc.setTextColor(...ROYAL)
+        doc.textWithLink("LINK", pageW - marginX, y, { align: "right", url: proj.link })
+      }
+      y += lh(10.5) + 0.4
+      if (proj.techStack) {
+        doc.setFont("helvetica", "italic")
+        doc.setFontSize(fs(9))
+        doc.setTextColor(...MUTED)
+        doc.text(proj.techStack, marginX, y)
+        y += lh(9) + 0.6
+      }
+      if (proj.highlight) {
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(fs(9))
+        doc.setTextColor(...NAVY)
+        const hl = doc.splitTextToSize(proj.highlight, usableW)
+        hl.forEach((line: string) => {
+          ensureSpace(lh(9) + 1)
+          doc.text(line, marginX, y)
+          y += lh(9) + 0.4
+        })
+      }
+      proj.bullets.forEach((b) => bullet(b.text, b.emphasized))
+      if (idx < resume.projects.length - 1) y += 1.8
+    })
+  }
+
+  // ---- Education ----
+  if (resume.education.length > 0) {
+    section("Education")
+    resume.education.forEach((edu) => {
+      ensureSpace(lh(10.5) + lh(9.5) + 2)
+      const heading = edu.location ? `${edu.institution}  •  ${edu.location}` : edu.institution
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(fs(10.5))
+      doc.setTextColor(...BODY)
+      doc.text(heading, marginX, y)
+      doc.text(edu.period, pageW - marginX, y, { align: "right" })
+      y += lh(10.5) + 0.4
+      doc.setFont("helvetica", "italic")
+      doc.setFontSize(fs(9.5))
+      doc.setTextColor(...MUTED)
+      doc.text(edu.degree, marginX, y)
+      y += lh(9.5) + 1.6
+    })
+  }
+
+  // ---- Achievements & Certifications ----
+  if (resume.certifications.length > 0) {
+    section("Achievements & Certifications")
+    const pt = 9.5
+    resume.certifications.forEach((cert) => {
+      const issuer = cert.issuer ? ` — ${cert.issuer}` : ""
+      const text = `${cert.name}${issuer}`
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(fs(pt))
+      doc.setTextColor(...BODY)
+      const indent = marginX + 4
+      const lines = doc.splitTextToSize(text, usableW - 4)
+      lines.forEach((line: string, idx: number) => {
+        ensureSpace(lh(pt) + 1)
+        if (idx === 0) {
+          doc.setTextColor(...MUTED)
+          doc.text("\u2022", marginX + 1, y)
+          doc.setTextColor(...BODY)
+        }
+        doc.text(line, indent, y)
+        y += lh(pt) + 0.5
+      })
+      if (cert.link) {
+        doc.setFont("helvetica", "normal")
+        doc.setFontSize(fs(8.5))
+        doc.setTextColor(...ROYAL)
+        doc.textWithLink("View credential", indent, y, { url: cert.link })
+        y += lh(8.5) + 0.6
+      }
+    })
+  }
+
+  return pages
 }

@@ -1,11 +1,29 @@
 // Domain types for the Semantic Career Alignment Engine.
 // These map 1:1 to the planned Aurora PostgreSQL schema (see scripts/).
 
+export type SkillCategory =
+  | "Languages"
+  | "Frontend"
+  | "Backend"
+  | "Databases"
+  | "DevOps & Tools"
+  | "Core Skills"
+
+export const SKILL_CATEGORIES: SkillCategory[] = [
+  "Languages",
+  "Frontend",
+  "Backend",
+  "Databases",
+  "DevOps & Tools",
+  "Core Skills",
+]
+
 export interface Skill {
   id: string
   name: string
   level: "Beginner" | "Intermediate" | "Advanced" | "Expert"
   years: number
+  category: SkillCategory
 }
 
 export interface Metric {
@@ -18,11 +36,38 @@ export interface Experience {
   id: string
   role: string
   company: string
+  location: string
   startDate: string
   endDate: string
   description: string
   skills: string[]
   metrics: Metric[]
+}
+
+export interface Project {
+  id: string
+  name: string
+  link: string
+  techStack: string
+  // Optional one-line highlight (e.g. award, ranking, context).
+  highlight: string
+  description: string
+}
+
+export interface Education {
+  id: string
+  institution: string
+  degree: string
+  location: string
+  startDate: string
+  endDate: string
+}
+
+export interface Certification {
+  id: string
+  name: string
+  issuer: string
+  link: string
 }
 
 export interface CareerGraph {
@@ -31,6 +76,9 @@ export interface CareerGraph {
   summary: string
   experiences: Experience[]
   skills: Skill[]
+  projects: Project[]
+  education: Education[]
+  certifications: Certification[]
 }
 
 export type AlignmentStatus = "match" | "partial" | "gap"
@@ -51,8 +99,46 @@ export interface ResumeBullet {
 export interface ResumeExperience {
   role: string
   company: string
+  location: string
   period: string
   bullets: ResumeBullet[]
+}
+
+export interface ResumeProject {
+  name: string
+  link: string
+  techStack: string
+  highlight: string
+  bullets: ResumeBullet[]
+}
+
+export interface ResumeEducation {
+  institution: string
+  degree: string
+  location: string
+  period: string
+}
+
+export interface ResumeCertification {
+  name: string
+  issuer: string
+  link: string
+}
+
+export interface ResumeSkillGroup {
+  label: string
+  items: string[]
+}
+
+export interface GeneratedResume {
+  name: string
+  headline: string
+  summary: string
+  skillGroups: ResumeSkillGroup[]
+  experiences: ResumeExperience[]
+  projects: ResumeProject[]
+  education: ResumeEducation[]
+  certifications: ResumeCertification[]
 }
 
 export interface AlignmentResult {
@@ -61,11 +147,5 @@ export interface AlignmentResult {
   partial: SkillAlignment[]
   gaps: SkillAlignment[]
   jobSkills: string[]
-  resume: {
-    name: string
-    headline: string
-    summary: string
-    coreSkills: string[]
-    experiences: ResumeExperience[]
-  }
+  resume: GeneratedResume
 }
