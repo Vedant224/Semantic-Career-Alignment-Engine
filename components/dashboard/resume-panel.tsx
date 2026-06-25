@@ -4,8 +4,7 @@ import { useState } from "react"
 import { FileText, Sparkles, Download, Code } from "lucide-react"
 import type { AlignmentResult } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { generateLatexResume, downloadLatex, generatePdfFromHtml } from "@/lib/latex-generator"
-import { PrintableResume } from "./printable-resume"
+import { generateLatexResume, downloadLatex, generateResumePdf } from "@/lib/latex-generator"
 
 export function ResumePanel({ result }: { result: AlignmentResult | null }) {
   const [isExporting, setIsExporting] = useState(false)
@@ -14,9 +13,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
     if (!result) return
     setIsExporting(true)
     try {
-      const element = document.getElementById("resume-print")
-      if (!element) throw new Error("Printable resume element not found")
-      await generatePdfFromHtml(element, "resume.pdf")
+      await generateResumePdf(result, "resume.pdf")
     } catch (error) {
       console.error("[v0] PDF download error:", error)
       alert("Failed to generate PDF. Please try again.")
@@ -149,7 +146,6 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
           </div>
         </section>
       </div>
-      <PrintableResume result={result} />
     </div>
   )
 }

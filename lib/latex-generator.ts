@@ -165,42 +165,155 @@ export function downloadLatex(content: string, filename = "resume.tex"): void {
   document.body.removeChild(element)
 }
 
-export async function generatePdfFromHtml(htmlElement: HTMLElement, filename = "resume.pdf"): Promise<void> {
+// Theme colors as RGB tuples for the PDF.
+const NAVY: [number, number, number] = [10, 48, 97]
+const ROYAL: [number, number, number] = [37, 99, 235]
+const BODY: [number, number, number] = [31, 41, 55]
+const MUTED: [number, number, number] = [75, 85, 99]
+
+/**
+ * Generate a crisp, selectable, lightweight (compressed) vector PDF that
+ * mirrors the LaTeX template layout. No rasterization — text stays sharp and
+ * the file size stays tiny. Auto-scales font size to keep it to a single page.
+ */
+export async function generateResumePdf(result: AlignmentResult, filename = "resume.pdf"): Promise<void> {
   const { jsPDF } = await import("jspdf")
-  const html2canvas = (await import("html2canvas")).default
+  const { resume } = result
 
-  const canvas = await html2canvas(htmlElement, {
-    scale: 2,
-    useCORS: true,
-    logging: false,
-    backgroundColor: "#ffffff",
-    windowHeight: htmlElement.scrollHeight,
-  })
+  // A4 page, compression enabled for small file size.
+  const pageW = 210
+  const pageH = 297
+  const marginX = 18
+  const usableW = pageW - marginX * 2
 
-  const imgData = canvas.toDataURL("image/png")
-  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" })
+  // Try progressively smaller scales until everything fits on one page.
+  const scales = [1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7]
+  for (let s = 0; s < scales.length; s++) {
+    const scale = scales[s]
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true })
+    const fit = renderResume(doc, resume, { pageW, pageH, marginX, usableW, scale })
+    if (fit || s === scales.length - 1) {
+      doc.save(filename)
+      return
+    }
+  }
+}
 
-  const pageWidth = 210 // A4 width in mm
-  const pageHeight = 297 // A4 height in mm
-  const imgWidth = pageWidth
-  const imgHeight = (canvas.height * imgWidth) / canvas.width
+type Resume = AlignmentResult["resume"]
 
-  // Scale down to keep the resume on a single page when slightly over.
-  if (imgHeight <= pageHeight + 8) {
-    const finalHeight = Math.min(imgHeight, pageHeight)
-    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, finalHeight)
-  } else {
-    let heightLeft = imgHeight
-    let position = 0
-    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight)
-    heightLeft -= pageHeight
-    while (heightLeft > 0) {
-      position -= pageHeight
-      pdf.addPage()
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight)
-      heightLeft -= pageHeight
+function renderResume(
+  doc: import("jspdf").jsPDF,
+  resume: Resume,
+  cfg: { pageW: number; pageH: number; marginX: number; usableW: number; scale: number },
+): boolean {
+  const { pageW, pageH, marginX, usableW, scale } = cfg
+  const bottomLimit = pageH - 16
+  let y = 20
+
+  const fs = (pt: number) => pt * scale
+  const lh = (pt: number) => (pt * scale) / 2.6 // approximate line height in mm
+
+  // ---- Heading: name (centered, navy) ----
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(fs(22))
+  doc.setTextColor(...NAVY)
+  doc.text(resume.name.toUpperCase(), pageW / 2, y, { align: "center" })
+  y += lh(22) + 1
+
+  if (resume.headline) {
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(fs(10.5))
+    doc.setTextColor(...ROYAL)
+    doc.text(resume.headline, pageW / 2, y, { align: "center" })
+    y += lh(10.5) + 2
+  }
+
+  const section = (title: string) => {
+    y += 3
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(fs(12))
+    doc.setTextColor(...NAVY)
+    doc.text(title.toUpperCase(), marginX, y)
+    y += 1.5
+    doc.setDrawColor(...NAVY)
+    doc.setLineWidth(0.4)
+    doc.line(marginX, y, pageW - marginX, y)
+    y += 4
+  }
+
+  const paragraph = (text: string, pt: number, color: [number, number, number], style: "normal" | "italic" | "bold" = "normal") => {
+    doc.setFont("helvetica", style)
+    doc.setFontSize(fs(pt))
+    doc.setTextColor(...color)
+    const lines = doc.splitTextToSize(text, usableW)
+    for (const line of lines) {
+      doc.text(line, marginX, y)
+      y += lh(pt) + 0.6
     }
   }
 
-  pdf.save(filename)
+  // ---- Professional Summary ----
+  section("Professional Summary")
+  paragraph(resume.summary, 10, BODY)
+
+  // ---- Technical Skills ----
+  const half = Math.ceil(resume.coreSkills.length / 2)
+  const primary = resume.coreSkills.slice(0, half)
+  const secondary = resume.coreSkills.slice(half)
+  section("Technical Skills")
+
+  const skillLine = (label: string, items: string[]) => {
+    if (items.length === 0) return
+    doc.setFontSize(fs(10))
+    doc.setFont("helvetica", "bold")
+    doc.setTextColor(...NAVY)
+    const labelText = `${label}: `
+    const labelW = (doc.getStringUnitWidth(labelText) * fs(10)) / 2.83
+    doc.text(labelText, marginX, y)
+    doc.setFont("helvetica", "normal")
+    doc.setTextColor(...BODY)
+    const lines = doc.splitTextToSize(items.join(", "), usableW - labelW)
+    lines.forEach((line: string, i: number) => {
+      doc.text(line, i === 0 ? marginX + labelW : marginX, y)
+      if (i < lines.length - 1) y += lh(10) + 0.6
+    })
+    y += lh(10) + 1.4
+  }
+  skillLine("Core Competencies", primary)
+  skillLine("Supporting Skills", secondary)
+
+  // ---- Professional Experience ----
+  section("Professional Experience")
+  resume.experiences.forEach((exp, idx) => {
+    // company (bold, left) + period (bold, right)
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(fs(11))
+    doc.setTextColor(...BODY)
+    doc.text(exp.company, marginX, y)
+    doc.text(exp.period, pageW - marginX, y, { align: "right" })
+    y += lh(11) + 0.6
+    // role (italic)
+    doc.setFont("helvetica", "italic")
+    doc.setFontSize(fs(10))
+    doc.setTextColor(...MUTED)
+    doc.text(exp.role, marginX, y)
+    y += lh(10) + 1
+    // bullets
+    exp.bullets.forEach((b) => {
+      const color = b.emphasized ? ROYAL : BODY
+      doc.setFont("helvetica", b.emphasized ? "bold" : "normal")
+      doc.setFontSize(fs(10))
+      doc.setTextColor(...color)
+      const bulletIndent = marginX + 4
+      const lines = doc.splitTextToSize(b.text, usableW - 4)
+      doc.text("\u2022", marginX + 1, y)
+      lines.forEach((line: string) => {
+        doc.text(line, bulletIndent, y)
+        y += lh(10) + 0.5
+      })
+    })
+    if (idx < resume.experiences.length - 1) y += 2
+  })
+
+  return y <= bottomLimit
 }
