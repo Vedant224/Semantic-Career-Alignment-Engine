@@ -136,7 +136,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
         )}
         {pdfStatus === "idle" && pdfUrl && (
           <iframe
-            src={pdfUrl}
+            src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
             title="Compiled LaTeX resume PDF"
             className="h-[80vh] w-full rounded-lg border border-border bg-white shadow-md"
           />
