@@ -58,9 +58,14 @@ The Semantic Career Alignment Engine helps professionals:
 - **html2canvas**: Screenshot-to-image utility (optional, for future preview features)
 
 ### API & Backend
-- **Next.js API Routes** (`/api/compile-latex`): Server-side proxy to the LaTeX compiler
-- **PostgreSQL** (future): Aurora PostgreSQL for persisting career graphs (schema files in `/scripts`)
-- **AWS RDS IAM Signer**: For secure database connections (dependencies included)
+- **Next.js API Routes**: 
+  - `/api/compile-latex`: Server-side proxy to the LaTeX compiler
+  - `/api/career-graphs/save`: Persist career graphs to the database
+  - `/api/career-graphs/load`: Retrieve saved career graphs
+  - `/api/career-graphs/list`: List all saved graphs
+  - `/api/career-graphs/delete`: Delete a graph
+- **AWS Aurora PostgreSQL**: For persisting career graphs with JSONB storage
+- **AWS RDS IAM Signer**: For secure, token-based database connections
 
 ### Utilities & Styling
 - **Class Variance Authority**: CSS class composition for complex component variants
@@ -86,12 +91,23 @@ The Semantic Career Alignment Engine helps professionals:
    npm install
    ```
 
-3. **Set up environment variables** (if using database features):
-   Create a `.env.local` file in the project root (see `.env.example` if provided):
+3. **Set up environment variables** (optional, if using the database):
+   Create a `.env.local` file in the project root:
    ```bash
-   # Example for Aurora PostgreSQL with IAM auth (optional)
-   # DATABASE_URL=...
+   # AWS Aurora PostgreSQL with IAM authentication
+   PGHOST=your-aurora-cluster.xxxx.us-east-1.rds.amazonaws.com
+   PGDATABASE=postgres
+   PGUSER=postgres
+   AWS_REGION=us-east-1
+   AWS_ROLE_ARN=arn:aws:iam::ACCOUNT_ID:role/vercel-project-role
    ```
+   
+4. **Set up the database schema** (one-time, after connecting the Aurora PostgreSQL integration):
+   ```bash
+   # Connect to your Aurora PostgreSQL cluster and run the schema script
+   psql -h $PGHOST -U $PGUSER -d $PGDATABASE -f scripts/001-setup-career-graph-schema.sql
+   ```
+   This creates the `career_graphs` and `alignments` tables with proper indexes.
 
 ### Running Locally
 
@@ -200,21 +216,86 @@ npm run lint
 
 ### Future Enhancements
 
-- [ ] PostgreSQL persistence for career graphs (schema in `/scripts`)
+- [x] **AWS Aurora PostgreSQL** persistence for career graphs (API routes + schema implemented)
 - [ ] ML embeddings (pgvector) for semantic similarity instead of token matching
 - [ ] AI-powered professional summary generation per role
 - [ ] Multi-page resume support with section reordering
 - [ ] ATSF (Applicant Tracking System) optimized export modes
 - [ ] Skill recommendation engine based on job market trends
+- [ ] User authentication (multi-user support)
+
+## Database Integration (AWS Aurora PostgreSQL)
+
+### Overview
+
+The app includes AWS Aurora PostgreSQL integration for persisting career graphs. This allows users to save, load, and manage multiple career profiles.
+
+### Architecture
+
+- **Schema**: JSONB-based storage (single table `career_graphs`) with flexible nested data for experiences, skills, projects, education, and certifications
+- **Client Hook**: `useCareerDb()` in `lib/use-career-db.ts` provides a simple, type-safe interface for database operations
+- **API Routes**: Four endpoints handle save/load/list/delete with parameterized queries (SQL injection safe)
+- **Authentication**: AWS RDS IAM token-based authentication (no passwords stored, tokens auto-regenerated per connection)
+
+### Setup
+
+1. **Connect the AWS Aurora PostgreSQL integration** in your Vercel project settings
+2. **Configure environment variables**:
+   ```bash
+   PGHOST=your-aurora-cluster.xxxx.us-east-1.rds.amazonaws.com
+   PGDATABASE=postgres
+   PGUSER=postgres
+   AWS_REGION=us-east-1
+   AWS_ROLE_ARN=arn:aws:iam::ACCOUNT_ID:role/vercel-project-role
+   ```
+3. **Run the schema script**:
+   ```bash
+   psql -h $PGHOST -U postgres -d postgres -f scripts/001-setup-career-graph-schema.sql
+   ```
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/career-graphs/save` | Save/update a career graph (upsert by name) |
+| GET | `/api/career-graphs/load?name=xyz` | Load a saved graph by name |
+| GET | `/api/career-graphs/list` | List all saved career graphs |
+| DELETE | `/api/career-graphs/delete?name=xyz` | Delete a graph by name |
+
+### Usage Example
+
+```typescript
+import { useCareerDb } from "@/lib/use-career-db"
+
+export function MyComponent() {
+  const db = useCareerDb()
+  
+  const handleSave = async () => {
+    const result = await db.save("senior-engineer", careerGraphData)
+    if (result) console.log("Saved as:", result.name)
+  }
+  
+  const handleLoad = async () => {
+    const data = await db.load("senior-engineer")
+    if (data) console.log("Loaded from", data.created_at)
+  }
+  
+  const allGraphs = await db.list()
+  // [{ id, name, profile_name, headline, created_at, updated_at }, ...]
+}
+```
 
 ## Environment Variables
 
-Currently, the app requires no environment variables for local development. To enable database features in the future:
+For local development without a database, no environment variables are required. To enable database persistence:
 
 ```bash
-# Aurora PostgreSQL with IAM auth
-DATABASE_URL=postgresql://...
+# AWS Aurora PostgreSQL with IAM auth
+PGHOST=your-aurora-cluster.xxxx.us-east-1.rds.amazonaws.com
+PGDATABASE=postgres
+PGUSER=postgres
 AWS_REGION=us-east-1
+AWS_ROLE_ARN=arn:aws:iam::ACCOUNT_ID:role/vercel-project-role
 ```
 
 ## Troubleshooting
