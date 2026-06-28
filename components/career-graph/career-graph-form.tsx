@@ -268,7 +268,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           {graph.skills.map((skill) => (
             <div
               key={skill.id}
-              className="grid grid-cols-1 gap-2 rounded-lg border border-border bg-secondary/30 p-2.5 sm:grid-cols-[1fr_auto_auto_auto_auto]"
+              className="grid grid-cols-1 gap-2 rounded-lg bg-secondary/30 p-2.5 sm:grid-cols-[1fr_auto_auto_auto_auto]"
             >
               <Input
                 value={skill.name}
@@ -292,7 +292,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
                   max={40}
                   value={skill.years}
                   onChange={(e) => updateSkill(skill.id, { years: Number(e.target.value) })}
-                  className="w-16 rounded-lg border border-input bg-card px-2 py-2 text-sm text-foreground outline-none focus:border-ring"
+                  className="w-16 rounded-lg border border-transparent bg-card px-2 py-2 text-sm text-foreground outline-none transition focus:border-ring"
                 />
                 <span className="text-xs text-muted-foreground">yrs</span>
               </div>
@@ -313,7 +313,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
         <div className="space-y-4">
           {graph.experiences.length === 0 && <Empty>No experience entries yet.</Empty>}
           {graph.experiences.map((exp) => (
-            <div key={exp.id} className="rounded-xl border border-border bg-secondary/20 p-4">
+              <div key={exp.id} className="rounded-xl bg-secondary/30 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="grid flex-1 gap-3 sm:grid-cols-2">
                   <Field label="Role">
@@ -418,7 +418,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
         <div className="space-y-4">
           {graph.projects.length === 0 && <Empty>No projects yet.</Empty>}
           {graph.projects.map((project) => (
-            <div key={project.id} className="rounded-xl border border-border bg-secondary/20 p-4">
+              <div key={project.id} className="rounded-xl bg-secondary/30 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="grid flex-1 gap-3 sm:grid-cols-2">
                   <Field label="Project name">
@@ -477,7 +477,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
         <div className="space-y-4">
           {graph.education.length === 0 && <Empty>No education entries yet.</Empty>}
           {graph.education.map((edu) => (
-            <div key={edu.id} className="rounded-xl border border-border bg-secondary/20 p-4">
+              <div key={edu.id} className="rounded-xl bg-secondary/30 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="grid flex-1 gap-3 sm:grid-cols-2">
                   <Field label="Institution">
@@ -538,7 +538,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           {graph.certifications.map((cert) => (
             <div
               key={cert.id}
-              className="grid grid-cols-1 gap-2 rounded-lg border border-border bg-secondary/30 p-2.5 sm:grid-cols-[1.4fr_1fr_1fr_auto]"
+              className="grid grid-cols-1 gap-2 rounded-lg bg-secondary/30 p-2.5 sm:grid-cols-[1.4fr_1fr_1fr_auto]"
             >
               <Input
                 value={cert.name}
@@ -634,7 +634,7 @@ function SectionNav() {
 }
 
 const textareaClass =
-  "w-full resize-none rounded-md border border-input bg-card p-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring"
+  "w-full resize-none rounded-lg border border-transparent bg-secondary/60 p-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring focus:bg-card"
 
 function Card({
   id,
@@ -652,7 +652,7 @@ function Card({
   children: React.ReactNode
 }) {
   return (
-    <section id={id} className="scroll-mt-24 rounded-lg border border-border bg-card p-6">
+    <section id={id} className="scroll-mt-24 rounded-2xl border border-border/60 bg-card p-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-primary">
@@ -702,7 +702,7 @@ function Input({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring"
+      className="w-full rounded-lg border border-transparent bg-secondary/60 px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring focus:bg-card"
     />
   )
 }
@@ -720,7 +720,7 @@ function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-ring"
+      className="rounded-lg border border-transparent bg-secondary/60 px-3 py-2 text-sm text-foreground outline-none transition focus:border-ring focus:bg-card"
     >
       {options.map((o) => (
         <option key={o} value={o}>
@@ -750,7 +750,7 @@ function IconButton({ label, onClick }: { label: string; onClick: () => void }) 
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition hover:border-[color:var(--gap)]/40 hover:text-[color:var(--gap)]"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent text-muted-foreground transition hover:bg-[color:var(--gap)]/10 hover:text-[color:var(--gap)]"
     >
       <Trash2 className="h-4 w-4" aria-hidden="true" />
     </button>
