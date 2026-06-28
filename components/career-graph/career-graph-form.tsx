@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import {
   Plus,
   Trash2,
   Save,
   Check,
+  ChevronDown,
   Loader2,
   Briefcase,
   Wrench,
@@ -716,18 +717,95 @@ function Select({
   onChange: (v: string) => void
   options: readonly string[]
 }) {
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(Math.max(0, options.indexOf(value)))
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onPointer(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", onPointer)
+    return () => document.removeEventListener("mousedown", onPointer)
+  }, [open])
+
+  function commit(option: string) {
+    onChange(option)
+    setOpen(false)
+  }
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "ArrowDown" || (!open && (e.key === "Enter" || e.key === " "))) {
+      e.preventDefault()
+      if (!open) {
+        setOpen(true)
+        setActive(Math.max(0, options.indexOf(value)))
+      } else {
+        setActive((i) => Math.min(options.length - 1, i + 1))
+      }
+    } else if (e.key === "ArrowUp" && open) {
+      e.preventDefault()
+      setActive((i) => Math.max(0, i - 1))
+    } else if (e.key === "Enter" && open) {
+      e.preventDefault()
+      commit(options[active])
+    } else if (e.key === "Escape") {
+      setOpen(false)
+    }
+  }
+
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="rounded-lg border border-transparent bg-secondary/60 px-3 py-2 text-sm text-foreground outline-none transition focus:border-ring focus:bg-card"
-    >
-      {options.map((o) => (
-        <option key={o} value={o}>
-          {o}
-        </option>
-      ))}
-    </select>
+    <div ref={ref} className="relative min-w-[9rem] font-sans">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => {
+          setOpen((o) => !o)
+          setActive(Math.max(0, options.indexOf(value)))
+        }}
+        onKeyDown={onKeyDown}
+        className="flex w-full items-center justify-between gap-2 rounded-lg border border-transparent bg-secondary/60 px-3 py-2 text-sm text-foreground outline-none transition focus:border-ring focus:bg-card"
+      >
+        <span className="truncate">{value}</span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+            open && "rotate-180",
+          )}
+          aria-hidden="true"
+        />
+      </button>
+
+      {open && (
+        <ul
+          role="listbox"
+          className="absolute z-50 mt-1.5 max-h-60 w-full overflow-auto rounded-lg border border-border bg-card p-1 shadow-lg shadow-foreground/5"
+        >
+          {options.map((o, i) => {
+            const selected = o === value
+            return (
+              <li key={o} role="option" aria-selected={selected}>
+                <button
+                  type="button"
+                  onClick={() => commit(o)}
+                  onMouseEnter={() => setActive(i)}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors",
+                    i === active ? "bg-secondary text-foreground" : "text-muted-foreground",
+                    selected && "font-medium text-foreground",
+                  )}
+                >
+                  <span className="truncate">{o}</span>
+                  {selected && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
   )
 }
 
