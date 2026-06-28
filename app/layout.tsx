@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport = {
-  themeColor: "#8b6954",
+  themeColor: "#232326",
   width: "device-width",
   initialScale: 1,
 }
@@ -31,10 +31,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${rubik.variable} bg-background`} suppressHydrationWarning>
-      <head>
-        <style dangerouslySetInnerHTML={{__html: "html,body{background:#f3f1ec;color:#1a1a1c;font-family:var(--font-rubik),system-ui,sans-serif}"}} />
-      </head>
+    <html lang="en" className={`${rubik.variable} bg-background`}>
       <body className="font-sans antialiased">
         <div className="app-gradient min-h-screen">
           <SiteHeader />
