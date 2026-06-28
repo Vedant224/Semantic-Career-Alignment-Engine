@@ -31,10 +31,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${rubik.variable} bg-background`} style={{ backgroundColor: "#f3f1ec", color: "#1a1a1c" }}>
-      <head>
-        <style>{`html{background-color:#f3f1ec;color:#1a1a1c}body{background-color:#f3f1ec;color:#1a1a1c}`}</style>
-      </head>
+    <html lang="en" className={`${rubik.variable} bg-background`}>
       <body className="font-sans antialiased">
         <div className="app-gradient min-h-screen">
           <SiteHeader />
