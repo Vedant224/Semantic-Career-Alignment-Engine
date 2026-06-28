@@ -31,7 +31,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${rubik.variable} bg-background`}>
+    <html lang="en" className={`${rubik.variable} bg-background`} suppressHydrationWarning>
+      <head>
+        <style dangerouslySetInnerHTML={{__html: "html,body{background:#f3f1ec;color:#1a1a1c;font-family:var(--font-rubik),system-ui,sans-serif}"}} />
+      </head>
       <body className="font-sans antialiased">
         <div className="app-gradient min-h-screen">
           <SiteHeader />
