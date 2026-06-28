@@ -36,7 +36,7 @@ export function SiteHeader() {
                   "flex items-center gap-2 rounded-[7px] px-3 py-2 text-sm transition-colors",
                   active
                     ? "bg-secondary font-medium text-secondary-foreground"
-                    : "font-normal text-[#8c7b6e] hover:bg-secondary hover:text-foreground",
+                    : "font-normal text-muted-foreground hover:bg-secondary hover:text-foreground",
                 )}
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />

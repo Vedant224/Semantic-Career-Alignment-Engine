@@ -178,9 +178,12 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
   }
 
   return (
-    <div className="space-y-6">
+    <div className="lg:grid lg:grid-cols-[180px_1fr] lg:items-start lg:gap-8">
+      <SectionNav />
+
+      <div className="space-y-8">
       {/* Profile */}
-      <Card icon={User} title="Profile" subtitle="The headline that anchors your generated resume">
+      <Card id="profile" icon={User} title="Profile" subtitle="The headline that anchors your generated resume">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Full name">
             <Input
@@ -201,6 +204,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
       {/* Contact & Links */}
       <Card
+        id="contact"
         icon={ContactIcon}
         title="Contact & Links"
         subtitle="These appear under your name in the resume header"
@@ -253,6 +257,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
       {/* Skills */}
       <Card
+        id="skills"
         icon={Wrench}
         title="Skills"
         subtitle="Categorized skills become nodes in your graph and vectors for matching"
@@ -299,6 +304,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
       {/* Experiences */}
       <Card
+        id="experience"
         icon={Briefcase}
         title="Experience"
         subtitle="Roles, responsibilities, and the metrics that prove your impact"
@@ -403,6 +409,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
       {/* Projects */}
       <Card
+        id="projects"
         icon={FolderGit2}
         title="Projects"
         subtitle="Standout builds — JD-relevant projects are surfaced first on your resume"
@@ -461,6 +468,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
       {/* Education */}
       <Card
+        id="education"
         icon={GraduationCap}
         title="Education"
         subtitle="Degrees and institutions"
@@ -519,6 +527,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
       {/* Certifications */}
       <Card
+        id="certifications"
         icon={Award}
         title="Achievements & Certifications"
         subtitle="Credentials, awards, and recognitions"
@@ -567,7 +576,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           disabled={isPending}
           className={cn(
             "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-primary-foreground transition",
-            saved ? "bg-[color:var(--match)]" : "bg-primary hover:bg-[#7a5c47]",
+            saved ? "bg-[color:var(--match)]" : "bg-primary hover:bg-foreground",
             "disabled:opacity-60",
           )}
         >
@@ -581,22 +590,61 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           {isPending ? "Saving" : saved ? "Saved" : "Save career graph"}
         </button>
       </div>
+      </div>
     </div>
   )
 }
 
 /* ---------- small primitives ---------- */
 
+const SECTIONS = [
+  { id: "profile", label: "Profile", icon: User },
+  { id: "contact", label: "Contact & Links", icon: ContactIcon },
+  { id: "skills", label: "Skills", icon: Wrench },
+  { id: "experience", label: "Experience", icon: Briefcase },
+  { id: "projects", label: "Projects", icon: FolderGit2 },
+  { id: "education", label: "Education", icon: GraduationCap },
+  { id: "certifications", label: "Achievements", icon: Award },
+] as const
+
+function SectionNav() {
+  return (
+    <nav
+      aria-label="Career graph sections"
+      className="mb-6 hidden lg:sticky lg:top-24 lg:mb-0 lg:block"
+    >
+      <p className="mb-3 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Sections
+      </p>
+      <ul className="space-y-0.5">
+        {SECTIONS.map(({ id, label, icon: Icon }) => (
+          <li key={id}>
+            <a
+              href={`#${id}`}
+              className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
 const textareaClass =
-  "w-full resize-none rounded-lg border border-input bg-card p-3 text-sm text-foreground outline-none transition placeholder:text-[#b8a898] focus:border-ring"
+  "w-full resize-none rounded-md border border-input bg-card p-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring"
 
 function Card({
+  id,
   icon: Icon,
   title,
   subtitle,
   action,
   children,
 }: {
+  id?: string
   icon: typeof User
   title: string
   subtitle: string
@@ -604,7 +652,7 @@ function Card({
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-5">
+    <section id={id} className="scroll-mt-24 rounded-lg border border-border bg-card p-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-primary">
@@ -654,7 +702,7 @@ function Input({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-[#b8a898] focus:border-ring"
+      className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring"
     />
   )
 }
@@ -702,7 +750,7 @@ function IconButton({ label, onClick }: { label: string; onClick: () => void }) 
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-[#b8a898] transition hover:border-[color:var(--gap)]/40 hover:text-[color:var(--gap)]"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition hover:border-[color:var(--gap)]/40 hover:text-[color:var(--gap)]"
     >
       <Trash2 className="h-4 w-4" aria-hidden="true" />
     </button>

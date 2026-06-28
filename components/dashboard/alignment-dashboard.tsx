@@ -57,7 +57,7 @@ export function AlignmentDashboard() {
               value={jd}
               onChange={(e) => setJd(e.target.value)}
               placeholder="Paste the full job description here. The engine extracts required skills and compares them to your career graph..."
-              className="h-[320px] w-full resize-none rounded-lg border border-input bg-card p-4 text-sm leading-relaxed text-foreground outline-none transition placeholder:text-[#b8a898] focus:border-ring"
+              className="h-[320px] w-full resize-none rounded-md border border-input bg-card p-4 text-sm leading-relaxed text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring"
             />
             <div className="mt-3 flex items-center justify-between gap-3">
               <span className="text-xs text-muted-foreground">{jd.trim().length} characters</span>
@@ -67,7 +67,7 @@ export function AlignmentDashboard() {
                 disabled={isPending || jd.trim().length < 20}
                 className={cn(
                   "inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition",
-                  "hover:bg-[#7a5c47] disabled:cursor-not-allowed disabled:opacity-50",
+                  "hover:bg-foreground disabled:cursor-not-allowed disabled:opacity-50",
                 )}
               >
                 {isPending ? (

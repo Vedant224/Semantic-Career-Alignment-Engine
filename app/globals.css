@@ -37,44 +37,44 @@
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 
-  /* Warm, earthy, human light theme */
-  --background: #f5f0eb;
-  --foreground: #2d2520;
+  /* Ink-wash gallery theme — charcoal black, cool gray, soft ivory */
+  --background: #f3f1ec;
+  --foreground: #1a1a1c;
 
-  --card: #fbf8f5;
-  --card-foreground: #2d2520;
+  --card: #faf9f5;
+  --card-foreground: #1a1a1c;
 
-  --popover: #fbf8f5;
-  --popover-foreground: #2d2520;
+  --popover: #faf9f5;
+  --popover-foreground: #1a1a1c;
 
-  /* Primary action — warm clay */
-  --primary: #8b6954;
-  --primary-foreground: #fbf8f5;
+  /* Primary action — charcoal ink */
+  --primary: #232326;
+  --primary-foreground: #faf9f5;
 
-  /* Soft warm tint used for active nav, tags, panels */
-  --secondary: #ede7df;
-  --secondary-foreground: #5c4033;
+  /* Cool gray tint used for active nav, tags, panels */
+  --secondary: #e8e6e0;
+  --secondary-foreground: #2a2a2e;
 
-  --muted: #ede7df;
-  --muted-foreground: #8c7b6e;
+  --muted: #e8e6e0;
+  --muted-foreground: #6e6e73;
 
-  --accent: #ede7df;
-  --accent-foreground: #5c4033;
+  --accent: #e8e6e0;
+  --accent-foreground: #2a2a2e;
 
-  --border: #eae3da;
-  --input: #d4c8bc;
-  /* Focus border — no glow, no blue ring */
-  --ring: #c4a882;
+  --border: #e0ded7;
+  --input: #cfcdc6;
+  /* Focus border — cool gray, no glow */
+  --ring: #8a8a90;
 
-  /* Semantic alignment states — soft warm tints */
-  --match: #5a7a5a;
-  --match-foreground: #dff0df;
-  --gap: #9b5252;
-  --gap-foreground: #f5e3e3;
-  --partial: #9b7040;
-  --partial-foreground: #f5e8d8;
+  /* Semantic alignment states — muted, gallery-friendly */
+  --match: #3f6b57;
+  --match-foreground: #e4efe9;
+  --gap: #9a4f4f;
+  --gap-foreground: #f3e4e4;
+  --partial: #8a6a3a;
+  --partial-foreground: #f1e8d9;
 }
 
 @layer base {
