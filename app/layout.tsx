@@ -32,9 +32,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${rubik.variable} bg-background`}>
-      <head>
-        <style dangerouslySetInnerHTML={{__html: "html,body{background-color:#f3f1ec!important;color:#1a1a1c!important}"}} />
-      </head>
       <body className="font-sans antialiased">
         <div className="app-gradient min-h-screen">
           <SiteHeader />
