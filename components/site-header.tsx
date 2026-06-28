@@ -20,13 +20,8 @@ export function SiteHeader() {
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[color:var(--primary)] text-primary-foreground">
             <Compass className="h-5 w-5" aria-hidden="true" />
           </span>
-          <span className="flex flex-col leading-none">
-            <span className="text-lg font-medium tracking-tight text-foreground">
-              Career Alignment
-            </span>
-            <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-[color:var(--ring)]">
-              Semantic Engine
-            </span>
+          <span className="text-lg font-medium tracking-tight text-foreground">
+            Career Alignment
           </span>
         </Link>
 
