@@ -287,7 +287,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
                   max={40}
                   value={skill.years}
                   onChange={(e) => updateSkill(skill.id, { years: Number(e.target.value) })}
-                  className="w-16 rounded-lg border border-input bg-background px-2 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/20"
+                  className="w-16 rounded-lg border border-input bg-card px-2 py-2 text-sm text-foreground outline-none focus:border-ring"
                 />
                 <span className="text-xs text-muted-foreground">yrs</span>
               </div>
@@ -556,7 +556,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
       </Card>
 
       {/* Save bar */}
-      <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-2xl border border-border glass-panel px-5 py-3.5 shadow-lg shadow-primary/5">
+      <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-5 py-3.5">
         <p className="text-sm text-muted-foreground">
           {graph.skills.length} skills · {graph.experiences.length} roles · {graph.projects.length}{" "}
           projects
@@ -566,8 +566,8 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           onClick={save}
           disabled={isPending}
           className={cn(
-            "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm shadow-primary/30 transition",
-            saved ? "bg-[color:var(--match)]" : "bg-primary hover:bg-primary/90",
+            "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-primary-foreground transition",
+            saved ? "bg-[color:var(--match)]" : "bg-primary hover:bg-[#7a5c47]",
             "disabled:opacity-60",
           )}
         >
@@ -588,7 +588,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 /* ---------- small primitives ---------- */
 
 const textareaClass =
-  "w-full resize-none rounded-lg border border-input bg-background/60 p-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-4 focus:ring-ring/20"
+  "w-full resize-none rounded-lg border border-input bg-card p-3 text-sm text-foreground outline-none transition placeholder:text-[#b8a898] focus:border-ring"
 
 function Card({
   icon: Icon,
@@ -604,14 +604,14 @@ function Card({
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+    <section className="rounded-xl border border-border bg-card p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-primary">
             <Icon className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <h2 className="font-serif text-lg font-medium text-foreground">{title}</h2>
+            <h2 className="text-lg font-semibold text-foreground">{title}</h2>
             <p className="text-xs text-muted-foreground">{subtitle}</p>
           </div>
         </div>
@@ -654,7 +654,7 @@ function Input({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-lg border border-input bg-background/60 px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-4 focus:ring-ring/20"
+      className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-[#b8a898] focus:border-ring"
     />
   )
 }
@@ -672,7 +672,7 @@ function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/20"
+      className="rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-ring"
     >
       {options.map((o) => (
         <option key={o} value={o}>
@@ -702,7 +702,7 @@ function IconButton({ label, onClick }: { label: string; onClick: () => void }) 
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition hover:border-[color:var(--gap)]/40 hover:text-[color:var(--gap)]"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-[#b8a898] transition hover:border-[color:var(--gap)]/40 hover:text-[color:var(--gap)]"
     >
       <Trash2 className="h-4 w-4" aria-hidden="true" />
     </button>

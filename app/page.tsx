@@ -22,7 +22,7 @@ export default function HomePage() {
         </div>
         <Link
           href="/career-graph"
-          className="inline-flex items-center gap-2 self-start rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition hover:border-primary/40 hover:text-primary"
+          className="inline-flex items-center gap-2 self-start rounded-lg border border-[#d4c8bc] bg-transparent px-4 py-2.5 text-sm font-medium text-[#8c7b6e] transition hover:bg-secondary hover:text-foreground"
         >
           <Network className="h-4 w-4" aria-hidden="true" />
           Edit Career Graph

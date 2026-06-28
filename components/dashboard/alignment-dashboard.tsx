@@ -34,8 +34,8 @@ export function AlignmentDashboard() {
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       {/* Left: Job description input */}
       <section className="flex flex-col gap-4 animate-fade-up">
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-          <div className="flex items-center justify-between border-b border-border bg-secondary/40 px-5 py-3">
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border bg-secondary px-5 py-3">
             <div className="flex items-center gap-2 text-sm font-medium text-secondary-foreground">
               <ClipboardPaste className="h-4 w-4 text-primary" aria-hidden="true" />
               Target job description
@@ -57,7 +57,7 @@ export function AlignmentDashboard() {
               value={jd}
               onChange={(e) => setJd(e.target.value)}
               placeholder="Paste the full job description here. The engine extracts required skills and compares them to your career graph..."
-              className="h-[320px] w-full resize-none rounded-xl border border-input bg-background/60 p-4 text-sm leading-relaxed text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-4 focus:ring-ring/20"
+              className="h-[320px] w-full resize-none rounded-lg border border-input bg-card p-4 text-sm leading-relaxed text-foreground outline-none transition placeholder:text-[#b8a898] focus:border-ring"
             />
             <div className="mt-3 flex items-center justify-between gap-3">
               <span className="text-xs text-muted-foreground">{jd.trim().length} characters</span>
@@ -66,8 +66,8 @@ export function AlignmentDashboard() {
                 onClick={analyze}
                 disabled={isPending || jd.trim().length < 20}
                 className={cn(
-                  "inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm shadow-primary/30 transition",
-                  "hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50",
+                  "inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition",
+                  "hover:bg-[#7a5c47] disabled:cursor-not-allowed disabled:opacity-50",
                 )}
               >
                 {isPending ? (

@@ -26,9 +26,9 @@
   --color-partial: var(--partial);
   --color-partial-foreground: var(--partial-foreground);
 
-  --font-sans: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
-  --font-serif: var(--font-newsreader), ui-serif, Georgia, serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-sans: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -37,42 +37,44 @@
 }
 
 :root {
-  --radius: 0.875rem;
+  --radius: 0.75rem;
 
-  /* Cohesive sky-blue / white light theme */
-  --background: #f2f7fd;
-  --foreground: #122c4a;
+  /* Warm, earthy, human light theme */
+  --background: #f5f0eb;
+  --foreground: #2d2520;
 
-  --card: #ffffff;
-  --card-foreground: #122c4a;
+  --card: #fbf8f5;
+  --card-foreground: #2d2520;
 
-  --popover: #ffffff;
-  --popover-foreground: #122c4a;
+  --popover: #fbf8f5;
+  --popover-foreground: #2d2520;
 
-  /* Refined azure — readable as text on white, calm as a fill */
-  --primary: #1f6fd0;
-  --primary-foreground: #f6faff;
+  /* Primary action — warm clay */
+  --primary: #8b6954;
+  --primary-foreground: #fbf8f5;
 
-  --secondary: #e6f0fb;
-  --secondary-foreground: #1c4e87;
+  /* Soft warm tint used for active nav, tags, panels */
+  --secondary: #ede7df;
+  --secondary-foreground: #5c4033;
 
-  --muted: #edf3fb;
-  --muted-foreground: #647c98;
+  --muted: #ede7df;
+  --muted-foreground: #8c7b6e;
 
-  --accent: #d8e8fa;
-  --accent-foreground: #1b4e87;
+  --accent: #ede7df;
+  --accent-foreground: #5c4033;
 
-  --border: #dce8f5;
-  --input: #d7e5f4;
-  --ring: #4a9be8;
+  --border: #eae3da;
+  --input: #d4c8bc;
+  /* Focus border — no glow, no blue ring */
+  --ring: #c4a882;
 
-  /* Semantic alignment states tuned to harmonize with the blue theme */
-  --match: #0f9d8f;
-  --match-foreground: #effdfb;
-  --gap: #e25563;
-  --gap-foreground: #fff1f2;
-  --partial: #e08c2a;
-  --partial-foreground: #fff8ef;
+  /* Semantic alignment states — soft warm tints */
+  --match: #5a7a5a;
+  --match-foreground: #dff0df;
+  --gap: #9b5252;
+  --gap-foreground: #f5e3e3;
+  --partial: #9b7040;
+  --partial-foreground: #f5e8d8;
 }
 
 @layer base {
@@ -86,17 +88,14 @@
   }
 }
 
-/* Soft radial blue gradient backdrop — more blue at the top, fading to white */
+/* Solid warm page background — no gradient */
 .app-gradient {
-  background:
-    radial-gradient(55rem 38rem at 78% -12%, #c4def8 0%, rgba(196, 222, 248, 0) 58%),
-    radial-gradient(48rem 36rem at -8% 4%, #d9eafb 0%, rgba(217, 234, 251, 0) 55%),
-    linear-gradient(180deg, #e8f2fd 0%, #f7fbff 62%, #ffffff 100%);
+  background: var(--background);
 }
 
+/* Structural panel surface — no blur, no elevation */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(12px);
+  background: var(--card);
 }
 
 @keyframes fade-up {
