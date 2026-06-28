@@ -67,11 +67,11 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
 
   if (!result) {
     return (
-      <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+      <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-10 text-center">
+        <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-secondary text-primary">
           <FileText className="h-7 w-7" aria-hidden="true" />
         </span>
-        <h3 className="mt-4 font-serif text-xl font-medium text-foreground">
+        <h3 className="mt-4 text-xl font-semibold text-foreground">
           Your optimized resume appears here
         </h3>
         <p className="mt-1 max-w-sm text-sm text-muted-foreground">
@@ -83,8 +83,8 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <div className="flex items-center justify-between border-b border-border bg-secondary/40 px-6 py-3">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border bg-secondary px-6 py-3">
         <div className="flex items-center gap-2 text-sm font-medium text-secondary-foreground">
           <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
           Optimized resume
@@ -117,7 +117,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
       )}
 
       {/* True LaTeX-compiled PDF */}
-      <div className="bg-secondary/30 p-4 sm:p-6">
+      <div className="bg-secondary p-4 sm:p-6">
         {pdfStatus === "loading" && (
           <div className="flex h-[80vh] flex-col items-center justify-center gap-3 text-muted-foreground">
             <Loader2 className="h-7 w-7 animate-spin text-primary" aria-hidden="true" />
@@ -138,7 +138,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
           <iframe
             src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
             title="Compiled LaTeX resume PDF"
-            className="h-[80vh] w-full rounded-lg border border-border bg-white shadow-md"
+            className="h-[80vh] w-full rounded-lg border border-border bg-card"
           />
         )}
       </div>
