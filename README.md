@@ -325,7 +325,7 @@ AWS_ROLE_ARN=arn:aws:iam::ACCOUNT_ID:role/vercel-project-role
 
 ## License
 
-MIT License (or specify your preferred license)
+MIT License 
 
 ## Author
 
