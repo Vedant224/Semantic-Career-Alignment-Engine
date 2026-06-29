@@ -1,5 +1,6 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { getCareerGraph, saveCareerGraph } from "@/lib/career-store"
 import { runAlignment } from "@/lib/matching"
 import type { AlignmentResult, CareerGraph } from "@/lib/types"
@@ -23,6 +24,8 @@ export async function alignToJobDescription(
 /** Persist edits to the Master Career Graph. */
 export async function updateCareerGraph(graph: CareerGraph): Promise<{ ok: true }> {
   await saveCareerGraph(graph)
+  revalidatePath("/")
+  revalidatePath("/career-graph")
   return { ok: true }
 }
 
