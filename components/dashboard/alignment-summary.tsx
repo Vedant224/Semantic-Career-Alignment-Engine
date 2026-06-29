@@ -7,11 +7,11 @@ export function AlignmentSummary({ result }: { result: AlignmentResult }) {
   const total = matched.length + partial.length + gaps.length
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <div className="flex items-center gap-5">
         <ScoreRing score={score} />
         <div className="min-w-0">
-          <h3 className="text-xl font-semibold text-foreground">Alignment Score</h3>
+          <h3 className="font-serif text-xl font-medium text-foreground">Alignment Score</h3>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {matched.length} matched · {partial.length} partial · {gaps.length} gaps across{" "}
             {total} required skills
@@ -65,7 +65,7 @@ function ScoreRing({ score }: { score: number }) {
   return (
     <div className="relative h-20 w-20 shrink-0">
       <svg className="h-20 w-20 -rotate-90" viewBox="0 0 80 80" aria-hidden="true">
-        <circle cx="40" cy="40" r={radius} fill="none" stroke="var(--border)" strokeWidth="7" />
+        <circle cx="40" cy="40" r={radius} fill="none" stroke="var(--muted)" strokeWidth="7" />
         <circle
           cx="40"
           cy="40"

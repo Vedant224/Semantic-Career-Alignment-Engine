@@ -1,12 +1,11 @@
 "use client"
 
-import { useEffect, useRef, useState, useTransition } from "react"
+import { useState, useTransition } from "react"
 import {
   Plus,
   Trash2,
   Save,
   Check,
-  ChevronDown,
   Loader2,
   Briefcase,
   Wrench,
@@ -179,12 +178,9 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
   }
 
   return (
-    <div className="lg:grid lg:grid-cols-[180px_1fr] lg:items-start lg:gap-8">
-      <SectionNav />
-
-      <div className="space-y-8">
+    <div className="space-y-6">
       {/* Profile */}
-      <Card id="profile" icon={User} title="Profile" subtitle="The headline that anchors your generated resume">
+      <Card icon={User} title="Profile" subtitle="The headline that anchors your generated resume">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Full name">
             <Input
@@ -205,7 +201,6 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
       {/* Contact & Links */}
       <Card
-        id="contact"
         icon={ContactIcon}
         title="Contact & Links"
         subtitle="These appear under your name in the resume header"
@@ -258,7 +253,6 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
       {/* Skills */}
       <Card
-        id="skills"
         icon={Wrench}
         title="Skills"
         subtitle="Categorized skills become nodes in your graph and vectors for matching"
@@ -269,7 +263,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           {graph.skills.map((skill) => (
             <div
               key={skill.id}
-              className="grid grid-cols-1 gap-2 rounded-lg bg-secondary/30 p-2.5 sm:grid-cols-[1fr_auto_auto_auto_auto]"
+              className="grid grid-cols-1 gap-2 rounded-lg border border-border bg-secondary/30 p-2.5 sm:grid-cols-[1fr_auto_auto_auto_auto]"
             >
               <Input
                 value={skill.name}
@@ -293,7 +287,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
                   max={40}
                   value={skill.years}
                   onChange={(e) => updateSkill(skill.id, { years: Number(e.target.value) })}
-                  className="w-16 rounded-lg border border-transparent bg-card px-2 py-2 text-sm text-foreground outline-none transition focus:border-ring"
+                  className="w-16 rounded-lg border border-input bg-background px-2 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/20"
                 />
                 <span className="text-xs text-muted-foreground">yrs</span>
               </div>
@@ -305,7 +299,6 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
       {/* Experiences */}
       <Card
-        id="experience"
         icon={Briefcase}
         title="Experience"
         subtitle="Roles, responsibilities, and the metrics that prove your impact"
@@ -314,7 +307,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
         <div className="space-y-4">
           {graph.experiences.length === 0 && <Empty>No experience entries yet.</Empty>}
           {graph.experiences.map((exp) => (
-              <div key={exp.id} className="rounded-xl bg-secondary/30 p-4">
+            <div key={exp.id} className="rounded-xl border border-border bg-secondary/20 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="grid flex-1 gap-3 sm:grid-cols-2">
                   <Field label="Role">
@@ -410,7 +403,6 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
       {/* Projects */}
       <Card
-        id="projects"
         icon={FolderGit2}
         title="Projects"
         subtitle="Standout builds — JD-relevant projects are surfaced first on your resume"
@@ -419,7 +411,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
         <div className="space-y-4">
           {graph.projects.length === 0 && <Empty>No projects yet.</Empty>}
           {graph.projects.map((project) => (
-              <div key={project.id} className="rounded-xl bg-secondary/30 p-4">
+            <div key={project.id} className="rounded-xl border border-border bg-secondary/20 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="grid flex-1 gap-3 sm:grid-cols-2">
                   <Field label="Project name">
@@ -469,7 +461,6 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
       {/* Education */}
       <Card
-        id="education"
         icon={GraduationCap}
         title="Education"
         subtitle="Degrees and institutions"
@@ -478,7 +469,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
         <div className="space-y-4">
           {graph.education.length === 0 && <Empty>No education entries yet.</Empty>}
           {graph.education.map((edu) => (
-              <div key={edu.id} className="rounded-xl bg-secondary/30 p-4">
+            <div key={edu.id} className="rounded-xl border border-border bg-secondary/20 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="grid flex-1 gap-3 sm:grid-cols-2">
                   <Field label="Institution">
@@ -528,7 +519,6 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
 
       {/* Certifications */}
       <Card
-        id="certifications"
         icon={Award}
         title="Achievements & Certifications"
         subtitle="Credentials, awards, and recognitions"
@@ -539,7 +529,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           {graph.certifications.map((cert) => (
             <div
               key={cert.id}
-              className="grid grid-cols-1 gap-2 rounded-lg bg-secondary/30 p-2.5 sm:grid-cols-[1.4fr_1fr_1fr_auto]"
+              className="grid grid-cols-1 gap-2 rounded-lg border border-border bg-secondary/30 p-2.5 sm:grid-cols-[1.4fr_1fr_1fr_auto]"
             >
               <Input
                 value={cert.name}
@@ -566,7 +556,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
       </Card>
 
       {/* Save bar */}
-      <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-5 py-3.5">
+      <div className="sticky bottom-4 z-20 flex items-center justify-between gap-3 rounded-2xl border border-border glass-panel px-5 py-3.5 shadow-lg shadow-primary/5">
         <p className="text-sm text-muted-foreground">
           {graph.skills.length} skills · {graph.experiences.length} roles · {graph.projects.length}{" "}
           projects
@@ -576,8 +566,8 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           onClick={save}
           disabled={isPending}
           className={cn(
-            "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-primary-foreground transition",
-            saved ? "bg-[color:var(--match)]" : "bg-primary hover:bg-foreground",
+            "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm shadow-primary/30 transition",
+            saved ? "bg-[color:var(--match)]" : "bg-primary hover:bg-primary/90",
             "disabled:opacity-60",
           )}
         >
@@ -591,61 +581,22 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           {isPending ? "Saving" : saved ? "Saved" : "Save career graph"}
         </button>
       </div>
-      </div>
     </div>
   )
 }
 
 /* ---------- small primitives ---------- */
 
-const SECTIONS = [
-  { id: "profile", label: "Profile", icon: User },
-  { id: "contact", label: "Contact & Links", icon: ContactIcon },
-  { id: "skills", label: "Skills", icon: Wrench },
-  { id: "experience", label: "Experience", icon: Briefcase },
-  { id: "projects", label: "Projects", icon: FolderGit2 },
-  { id: "education", label: "Education", icon: GraduationCap },
-  { id: "certifications", label: "Achievements", icon: Award },
-] as const
-
-function SectionNav() {
-  return (
-    <nav
-      aria-label="Career graph sections"
-      className="mb-6 hidden lg:sticky lg:top-24 lg:mb-0 lg:block"
-    >
-      <p className="mb-3 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Sections
-      </p>
-      <ul className="space-y-0.5">
-        {SECTIONS.map(({ id, label, icon: Icon }) => (
-          <li key={id}>
-            <a
-              href={`#${id}`}
-              className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            >
-              <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-              {label}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  )
-}
-
 const textareaClass =
-  "w-full resize-none rounded-lg border border-transparent bg-secondary/60 p-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring focus:bg-card"
+  "w-full resize-none rounded-lg border border-input bg-background/60 p-3 text-sm text-foreground outline-none transition focus:border-ring focus:ring-4 focus:ring-ring/20"
 
 function Card({
-  id,
   icon: Icon,
   title,
   subtitle,
   action,
   children,
 }: {
-  id?: string
   icon: typeof User
   title: string
   subtitle: string
@@ -653,14 +604,14 @@ function Card({
   children: React.ReactNode
 }) {
   return (
-    <section id={id} className="scroll-mt-24 rounded-2xl border border-border/60 bg-card p-6">
+    <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-primary">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Icon className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+            <h2 className="font-serif text-lg font-medium text-foreground">{title}</h2>
             <p className="text-xs text-muted-foreground">{subtitle}</p>
           </div>
         </div>
@@ -703,7 +654,7 @@ function Input({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-lg border border-transparent bg-secondary/60 px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring focus:bg-card"
+      className="w-full rounded-lg border border-input bg-background/60 px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-4 focus:ring-ring/20"
     />
   )
 }
@@ -717,95 +668,18 @@ function Select({
   onChange: (v: string) => void
   options: readonly string[]
 }) {
-  const [open, setOpen] = useState(false)
-  const [active, setActive] = useState(Math.max(0, options.indexOf(value)))
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    function onPointer(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", onPointer)
-    return () => document.removeEventListener("mousedown", onPointer)
-  }, [open])
-
-  function commit(option: string) {
-    onChange(option)
-    setOpen(false)
-  }
-
-  function onKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "ArrowDown" || (!open && (e.key === "Enter" || e.key === " "))) {
-      e.preventDefault()
-      if (!open) {
-        setOpen(true)
-        setActive(Math.max(0, options.indexOf(value)))
-      } else {
-        setActive((i) => Math.min(options.length - 1, i + 1))
-      }
-    } else if (e.key === "ArrowUp" && open) {
-      e.preventDefault()
-      setActive((i) => Math.max(0, i - 1))
-    } else if (e.key === "Enter" && open) {
-      e.preventDefault()
-      commit(options[active])
-    } else if (e.key === "Escape") {
-      setOpen(false)
-    }
-  }
-
   return (
-    <div ref={ref} className="relative min-w-[9rem] font-sans">
-      <button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => {
-          setOpen((o) => !o)
-          setActive(Math.max(0, options.indexOf(value)))
-        }}
-        onKeyDown={onKeyDown}
-        className="flex w-full items-center justify-between gap-2 rounded-lg border border-transparent bg-secondary/60 px-3 py-2 text-sm text-foreground outline-none transition focus:border-ring focus:bg-card"
-      >
-        <span className="truncate">{value}</span>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
-            open && "rotate-180",
-          )}
-          aria-hidden="true"
-        />
-      </button>
-
-      {open && (
-        <ul
-          role="listbox"
-          className="absolute z-50 mt-1.5 max-h-60 w-full overflow-auto rounded-lg border border-border bg-card p-1 shadow-lg shadow-foreground/5"
-        >
-          {options.map((o, i) => {
-            const selected = o === value
-            return (
-              <li key={o} role="option" aria-selected={selected}>
-                <button
-                  type="button"
-                  onClick={() => commit(o)}
-                  onMouseEnter={() => setActive(i)}
-                  className={cn(
-                    "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors",
-                    i === active ? "bg-secondary text-foreground" : "text-muted-foreground",
-                    selected && "font-medium text-foreground",
-                  )}
-                >
-                  <span className="truncate">{o}</span>
-                  {selected && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </div>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-ring focus:ring-4 focus:ring-ring/20"
+    >
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </select>
   )
 }
 
@@ -828,7 +702,7 @@ function IconButton({ label, onClick }: { label: string; onClick: () => void }) 
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent text-muted-foreground transition hover:bg-[color:var(--gap)]/10 hover:text-[color:var(--gap)]"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition hover:border-[color:var(--gap)]/40 hover:text-[color:var(--gap)]"
     >
       <Trash2 className="h-4 w-4" aria-hidden="true" />
     </button>

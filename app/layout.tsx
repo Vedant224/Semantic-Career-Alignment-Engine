@@ -1,14 +1,26 @@
 import type { Metadata } from "next"
-import { Rubik } from "next/font/google"
+import { JetBrains_Mono, Rubik, Newsreader } from "next/font/google"
 import "./globals.css"
 import { SiteHeader } from "@/components/site-header"
 
-// Rubik is the single typeface used across the entire app.
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+})
+
+// Rubik is reserved for the generated/printable resume only.
 const rubik = Rubik({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
   variable: "--font-rubik",
   display: "swap",
+})
+
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  variable: "--font-newsreader",
+  display: "swap",
+  style: ["normal", "italic"],
 })
 
 export const metadata: Metadata = {
@@ -19,7 +31,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport = {
-  themeColor: "#8b6954",
+  themeColor: "#0284c7",
   width: "device-width",
   initialScale: 1,
 }
@@ -30,7 +42,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${rubik.variable} bg-background`}>
+    <html
+      lang="en"
+      className={`${jetbrainsMono.variable} ${rubik.variable} ${newsreader.variable} bg-background`}
+    >
       <body className="font-sans antialiased">
         <div className="app-gradient min-h-screen">
           <SiteHeader />
