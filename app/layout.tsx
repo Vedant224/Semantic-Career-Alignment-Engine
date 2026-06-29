@@ -8,8 +8,7 @@ const rubik = Rubik({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
   variable: "--font-rubik",
-  display: "block",
-  preload: true,
+  display: "swap",
 })
 
 export const metadata: Metadata = {
@@ -32,18 +31,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${rubik.variable} bg-background`}>
-      <head>
-        <style>{`
-          html {
-            background: #f3f1ec;
-            color: #1a1a1c;
-          }
-          body {
-            background: #f3f1ec;
-            color: #1a1a1c;
-          }
-        `}</style>
-      </head>
       <body className="font-sans antialiased">
         <div className="app-gradient min-h-screen">
           <SiteHeader />
