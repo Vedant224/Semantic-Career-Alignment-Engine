@@ -4,8 +4,8 @@
 @layer base {
   html,
   body {
-    background-color: #0f172a;
-    color: #f8fafc;
+    background-color: #0a0e1a;
+    color: #e5e7eb;
   }
 }
 
@@ -48,42 +48,42 @@
 :root {
   --radius: 0.5rem;
 
-  /* Vibrant professional tech theme — deep navy, cyan, purple */
-  --background: #0f172a;
-  --foreground: #f8fafc;
+  /* Refined professional dark theme — deep navy, warm gold, muted cyan */
+  --background: #0a0e1a;
+  --foreground: #e5e7eb;
 
-  --card: #1e293b;
-  --card-foreground: #f8fafc;
+  --card: #12172f;
+  --card-foreground: #e5e7eb;
 
-  --popover: #1e293b;
-  --popover-foreground: #f8fafc;
+  --popover: #12172f;
+  --popover-foreground: #e5e7eb;
 
-  /* Primary action — vibrant cyan */
-  --primary: #06b6d4;
-  --primary-foreground: #0f172a;
+  /* Primary action — warm gold/amber */
+  --primary: #d4a574;
+  --primary-foreground: #0a0e1a;
 
-  /* Secondary accent — bright purple */
-  --secondary: #a855f7;
-  --secondary-foreground: #f8fafc;
+  /* Secondary accent — muted teal */
+  --secondary: #4b8a94;
+  --secondary-foreground: #e5e7eb;
 
-  --muted: #475569;
-  --muted-foreground: #cbd5e1;
+  --muted: #3f4659;
+  --muted-foreground: #9ca3af;
 
-  --accent: #06b6d4;
-  --accent-foreground: #0f172a;
+  --accent: #d4a574;
+  --accent-foreground: #0a0e1a;
 
-  --border: #334155;
-  --input: #1e293b;
-  /* Focus border — vibrant cyan */
-  --ring: #06b6d4;
+  --border: #1f2937;
+  --input: #12172f;
+  /* Focus border — muted gold */
+  --ring: #d4a574;
 
-  /* Semantic alignment states — vibrant versions */
-  --match: #10b981;
-  --match-foreground: #ecfdf5;
-  --gap: #ef4444;
-  --gap-foreground: #fef2f2;
-  --partial: #f59e0b;
-  --partial-foreground: #fffbeb;
+  /* Semantic alignment states — refined versions */
+  --match: #4d9e7a;
+  --match-foreground: #e8f5f1;
+  --gap: #c7524a;
+  --gap-foreground: #faf1f0;
+  --partial: #b89456;
+  --partial-foreground: #fdf9f3;
 }
 
 @layer base {
