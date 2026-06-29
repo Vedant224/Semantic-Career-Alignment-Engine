@@ -4,8 +4,8 @@
 @layer base {
   html,
   body {
-    background-color: #f5f9f8;
-    color: #2c3e35;
+    background-color: #f3f1ec;
+    color: #1a1a1c;
   }
 }
 
@@ -48,42 +48,42 @@
 :root {
   --radius: 0.5rem;
 
-  /* Enhanced wellness palette — vibrant emerald green, professional aesthetic */
-  --background: #f5f9f8;
-  --foreground: #2c3e35;
+  /* Ink-wash gallery theme — charcoal black, cool gray, soft ivory */
+  --background: #f3f1ec;
+  --foreground: #1a1a1c;
 
-  --card: #ffffff;
-  --card-foreground: #2c3e35;
+  --card: #faf9f5;
+  --card-foreground: #1a1a1c;
 
-  --popover: #ffffff;
-  --popover-foreground: #2c3e35;
+  --popover: #faf9f5;
+  --popover-foreground: #1a1a1c;
 
-  /* Primary action — vibrant emerald green */
-  --primary: #2d9d6f;
-  --primary-foreground: #ffffff;
+  /* Primary action — charcoal ink */
+  --primary: #232326;
+  --primary-foreground: #faf9f5;
 
-  /* Secondary accent — rich sage green */
-  --secondary: #5a8a7a;
-  --secondary-foreground: #ffffff;
+  /* Cool gray tint used for active nav, tags, panels */
+  --secondary: #e8e6e0;
+  --secondary-foreground: #2a2a2e;
 
-  --muted: #d1dcd9;
-  --muted-foreground: #667d76;
+  --muted: #e8e6e0;
+  --muted-foreground: #6e6e73;
 
-  --accent: #2d9d6f;
-  --accent-foreground: #ffffff;
+  --accent: #e8e6e0;
+  --accent-foreground: #2a2a2e;
 
-  --border: #e0ebe7;
-  --input: #f5f9f8;
-  /* Focus border — emerald */
-  --ring: #2d9d6f;
+  --border: #e0ded7;
+  --input: #cfcdc6;
+  /* Focus border — cool gray, no glow */
+  --ring: #8a8a90;
 
-  /* Semantic alignment states — refined wellness versions */
-  --match: #2d9d6f;
-  --match-foreground: #f0f7f4;
-  --gap: #a67d7d;
-  --gap-foreground: #faf5f5;
-  --partial: #c4a989;
-  --partial-foreground: #fdfcf9;
+  /* Semantic alignment states — muted, gallery-friendly */
+  --match: #3f6b57;
+  --match-foreground: #e4efe9;
+  --gap: #9a4f4f;
+  --gap-foreground: #f3e4e4;
+  --partial: #8a6a3a;
+  --partial-foreground: #f1e8d9;
 }
 
 @layer base {
