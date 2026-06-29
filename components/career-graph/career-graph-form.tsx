@@ -269,7 +269,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           {graph.skills.map((skill) => (
             <div
               key={skill.id}
-              className="grid grid-cols-1 gap-2 rounded-lg bg-secondary/30 p-2.5 sm:grid-cols-[1fr_auto_auto_auto_auto]"
+              className="grid grid-cols-1 gap-2 rounded-lg bg-muted/40 p-2.5 sm:grid-cols-[1fr_auto_auto_auto_auto]"
             >
               <Input
                 value={skill.name}
@@ -314,7 +314,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
         <div className="space-y-4">
           {graph.experiences.length === 0 && <Empty>No experience entries yet.</Empty>}
           {graph.experiences.map((exp) => (
-              <div key={exp.id} className="rounded-xl bg-secondary/30 p-4">
+              <div key={exp.id} className="rounded-xl bg-muted/40 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="grid flex-1 gap-3 sm:grid-cols-2">
                   <Field label="Role">
@@ -419,7 +419,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
         <div className="space-y-4">
           {graph.projects.length === 0 && <Empty>No projects yet.</Empty>}
           {graph.projects.map((project) => (
-              <div key={project.id} className="rounded-xl bg-secondary/30 p-4">
+              <div key={project.id} className="rounded-xl bg-muted/40 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="grid flex-1 gap-3 sm:grid-cols-2">
                   <Field label="Project name">
@@ -478,7 +478,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
         <div className="space-y-4">
           {graph.education.length === 0 && <Empty>No education entries yet.</Empty>}
           {graph.education.map((edu) => (
-              <div key={edu.id} className="rounded-xl bg-secondary/30 p-4">
+              <div key={edu.id} className="rounded-xl bg-muted/40 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="grid flex-1 gap-3 sm:grid-cols-2">
                   <Field label="Institution">
@@ -539,7 +539,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           {graph.certifications.map((cert) => (
             <div
               key={cert.id}
-              className="grid grid-cols-1 gap-2 rounded-lg bg-secondary/30 p-2.5 sm:grid-cols-[1.4fr_1fr_1fr_auto]"
+              className="grid grid-cols-1 gap-2 rounded-lg bg-muted/40 p-2.5 sm:grid-cols-[1.4fr_1fr_1fr_auto]"
             >
               <Input
                 value={cert.name}
@@ -622,7 +622,7 @@ function SectionNav() {
           <li key={id}>
             <a
               href={`#${id}`}
-              className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
               {label}
@@ -635,7 +635,7 @@ function SectionNav() {
 }
 
 const textareaClass =
-  "w-full resize-none rounded-lg border border-transparent bg-secondary/60 p-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring focus:bg-card"
+  "w-full resize-none rounded-lg border border-border bg-muted/40 p-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring focus:bg-card"
 
 function Card({
   id,
@@ -656,7 +656,7 @@ function Card({
     <section id={id} className="scroll-mt-24 rounded-2xl border border-border/60 bg-card p-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-primary">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-primary">
             <Icon className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
@@ -703,7 +703,7 @@ function Input({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-lg border border-transparent bg-secondary/60 px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring focus:bg-card"
+      className="w-full rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring focus:bg-card"
     />
   )
 }
@@ -766,7 +766,7 @@ function Select({
           setActive(Math.max(0, options.indexOf(value)))
         }}
         onKeyDown={onKeyDown}
-        className="flex w-full items-center justify-between gap-2 rounded-lg border border-transparent bg-secondary/60 px-3 py-2 text-sm text-foreground outline-none transition focus:border-ring focus:bg-card"
+        className="flex w-full items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-foreground outline-none transition focus:border-ring focus:bg-card"
       >
         <span className="truncate">{value}</span>
         <ChevronDown
@@ -793,7 +793,7 @@ function Select({
                   onMouseEnter={() => setActive(i)}
                   className={cn(
                     "flex w-full items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors",
-                    i === active ? "bg-secondary text-foreground" : "text-muted-foreground",
+                    i === active ? "bg-muted text-foreground" : "text-muted-foreground",
                     selected && "font-medium text-foreground",
                   )}
                 >
