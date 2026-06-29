@@ -48,7 +48,7 @@
 :root {
   --radius: 0.5rem;
 
-  /* Refined wellness palette — celadon green, rosy purple, cream */
+  /* Enhanced wellness palette — vibrant emerald green, professional aesthetic */
   --background: #f5f9f8;
   --foreground: #2c3e35;
 
@@ -58,27 +58,27 @@
   --popover: #ffffff;
   --popover-foreground: #2c3e35;
 
-  /* Primary action — celadon green */
-  --primary: #6b9e8f;
+  /* Primary action — vibrant emerald green */
+  --primary: #2d9d6f;
   --primary-foreground: #ffffff;
 
-  /* Secondary accent — deep forest green */
-  --secondary: #4a7a6f;
+  /* Secondary accent — rich sage green */
+  --secondary: #5a8a7a;
   --secondary-foreground: #ffffff;
 
   --muted: #d1dcd9;
   --muted-foreground: #667d76;
 
-  --accent: #4a7a6f;
+  --accent: #2d9d6f;
   --accent-foreground: #ffffff;
 
   --border: #e0ebe7;
   --input: #f5f9f8;
-  /* Focus border — celadon */
-  --ring: #6b9e8f;
+  /* Focus border — emerald */
+  --ring: #2d9d6f;
 
   /* Semantic alignment states — refined wellness versions */
-  --match: #5a9e7f;
+  --match: #2d9d6f;
   --match-foreground: #f0f7f4;
   --gap: #a67d7d;
   --gap-foreground: #faf5f5;
