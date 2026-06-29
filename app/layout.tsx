@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport = {
-  themeColor: "#232326",
+  themeColor: "#8b6954",
   width: "device-width",
   initialScale: 1,
 }
@@ -32,6 +32,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${rubik.variable} bg-background`}>
+      <head>
+        <style>{`
+          html {
+            background: #f3f1ec;
+            color: #1a1a1c;
+          }
+          body {
+            background: #f3f1ec;
+            color: #1a1a1c;
+          }
+        `}</style>
+      </head>
       <body className="font-sans antialiased">
         <div className="app-gradient min-h-screen">
           <SiteHeader />

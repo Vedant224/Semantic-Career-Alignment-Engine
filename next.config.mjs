@@ -4,9 +4,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  experimental: {
-    inlineCss: true,
-  },
 }
 
 export default nextConfig

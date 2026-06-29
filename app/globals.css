@@ -1,14 +1,5 @@
 @import "tailwindcss";
 
-/* Critical base styles - prevent FOUC */
-@layer base {
-  html,
-  body {
-    background-color: #f3f1ec;
-    color: #1a1a1c;
-  }
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
