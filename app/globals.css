@@ -62,14 +62,14 @@
   --primary: #6b9e8f;
   --primary-foreground: #ffffff;
 
-  /* Secondary accent — rich rosy purple */
-  --secondary: #b57ebd;
+  /* Secondary accent — deep forest green */
+  --secondary: #4a7a6f;
   --secondary-foreground: #ffffff;
 
   --muted: #d1dcd9;
   --muted-foreground: #667d76;
 
-  --accent: #b57ebd;
+  --accent: #4a7a6f;
   --accent-foreground: #ffffff;
 
   --border: #e0ebe7;
