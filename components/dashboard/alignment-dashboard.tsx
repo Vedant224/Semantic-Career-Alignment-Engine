@@ -31,24 +31,27 @@ export function AlignmentDashboard() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-      {/* Left: Job description input */}
-      <section className="flex flex-col gap-4 animate-fade-up">
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="flex items-center justify-between border-b border-border bg-secondary px-5 py-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-secondary-foreground">
-              <ClipboardPaste className="h-4 w-4 text-primary" aria-hidden="true" />
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,460px)_minmax(0,1fr)] lg:items-start">
+      {/* Left: editor column — paste the role, read the score. Scrolls. */}
+      <div className="flex flex-col gap-6 animate-fade-up">
+        {/* Stage 1 — paste the target role */}
+        <section className="overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div className="flex items-center gap-2.5 text-sm font-semibold text-foreground">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-accent ring-1 ring-inset ring-border">
+                <ClipboardPaste className="h-4 w-4" aria-hidden="true" />
+              </span>
               Target job description
             </div>
             <button
               type="button"
               onClick={() => setJd(SAMPLE_JD)}
-              className="text-xs font-medium text-primary hover:underline"
+              className="rounded-md px-2 py-1 font-mono text-xs font-medium uppercase tracking-wider text-accent transition hover:bg-accent/10"
             >
               Use sample
             </button>
           </div>
-          <div className="p-4">
+          <div className="p-4 sm:p-5">
             <label htmlFor="jd" className="sr-only">
               Job description
             </label>
@@ -57,17 +60,19 @@ export function AlignmentDashboard() {
               value={jd}
               onChange={(e) => setJd(e.target.value)}
               placeholder="Paste the full job description here. The engine extracts required skills and compares them to your career graph..."
-              className="h-[320px] w-full resize-none rounded-md border border-input bg-card p-4 text-sm leading-relaxed text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring"
+              className="h-[220px] w-full resize-y rounded-lg border border-border bg-background p-4 text-sm leading-relaxed text-foreground outline-none transition placeholder:text-muted-foreground/60 focus:border-ring focus:bg-card focus:ring-4 focus:ring-accent/10"
             />
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <span className="text-xs text-muted-foreground">{jd.trim().length} characters</span>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+              <span className="font-mono text-xs text-muted-foreground">
+                {jd.trim().length} chars
+              </span>
               <button
                 type="button"
                 onClick={analyze}
                 disabled={isPending || jd.trim().length < 20}
                 className={cn(
-                  "inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition",
-                  "hover:bg-foreground disabled:cursor-not-allowed disabled:opacity-50",
+                  "inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition",
+                  "hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40",
                 )}
               >
                 {isPending ? (
@@ -79,17 +84,22 @@ export function AlignmentDashboard() {
                 {!isPending && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
               </button>
             </div>
-            {error && <p className="mt-3 text-sm text-[color:var(--gap)]">{error}</p>}
+            {error && (
+              <p className="mt-3 rounded-lg border border-[color:var(--gap)]/30 bg-[color:var(--gap)]/8 px-3 py-2 text-sm text-[color:var(--gap)]">
+                {error}
+              </p>
+            )}
           </div>
-        </div>
+        </section>
 
+        {/* Stage 2 — alignment score */}
         {result && <AlignmentSummary result={result} />}
-      </section>
+      </div>
 
-      {/* Right: Generated resume */}
-      <section className="animate-fade-up lg:sticky lg:top-24 lg:self-start">
+      {/* Right: live resume preview — pinned so it stays in view while editing */}
+      <div className="animate-fade-up lg:sticky lg:top-24 lg:self-start">
         <ResumePanel result={result} />
-      </section>
+      </div>
     </div>
   )
 }

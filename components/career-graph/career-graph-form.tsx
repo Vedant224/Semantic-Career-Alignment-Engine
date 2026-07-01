@@ -377,7 +377,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
                   <button
                     type="button"
                     onClick={() => addMetric(exp.id)}
-                    className="text-xs font-medium text-primary hover:underline"
+                    className="text-xs font-medium text-accent hover:underline"
                   >
                     + Add metric
                   </button>
@@ -577,7 +577,7 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
           disabled={isPending}
           className={cn(
             "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-primary-foreground transition",
-            saved ? "bg-[color:var(--match)]" : "bg-primary hover:bg-foreground",
+            saved ? "bg-[color:var(--match)]" : "bg-primary hover:opacity-90",
             "disabled:opacity-60",
           )}
         >
@@ -614,15 +614,13 @@ function SectionNav() {
       aria-label="Career graph sections"
       className="mb-6 hidden lg:sticky lg:top-24 lg:mb-0 lg:block"
     >
-      <p className="mb-3 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Sections
-      </p>
+      <p className="eyebrow mb-3 px-3 text-muted-foreground">Sections</p>
       <ul className="space-y-0.5">
         {SECTIONS.map(({ id, label, icon: Icon }) => (
           <li key={id}>
             <a
               href={`#${id}`}
-              className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
               <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
               {label}
@@ -653,14 +651,14 @@ function Card({
   children: React.ReactNode
 }) {
   return (
-    <section id={id} className="scroll-mt-24 rounded-2xl border border-border/60 bg-card p-6">
-      <div className="mb-4 flex items-start justify-between gap-3">
+    <section id={id} className="scroll-mt-24 rounded-2xl border border-border bg-card p-6">
+      <div className="mb-5 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-primary">
-            <Icon className="h-5 w-5" aria-hidden="true" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-accent ring-1 ring-inset ring-border">
+            <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
           </span>
           <div>
-            <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+            <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">{title}</h2>
             <p className="text-xs text-muted-foreground">{subtitle}</p>
           </div>
         </div>
@@ -814,7 +812,7 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-sm font-medium text-primary transition hover:bg-primary/10"
+      className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground transition hover:border-accent/40 hover:bg-accent/5 hover:text-accent"
     >
       <Plus className="h-4 w-4" aria-hidden="true" />
       {label}

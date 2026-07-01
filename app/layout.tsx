@@ -1,15 +1,32 @@
 import type { Metadata } from "next"
-import { Rubik } from "next/font/google"
+import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
-import { SiteHeader } from "@/components/site-header"
+import { AppShell } from "@/components/app-shell"
 
-// Rubik is the single typeface used across the entire app.
-const rubik = Rubik({
+// Inter carries the UI and body copy — neutral, legible, workhorse.
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  variable: "--font-rubik",
-  display: "block",
+  weight: ["400", "500", "600"],
+  variable: "--font-inter",
+  display: "swap",
   preload: true,
+})
+
+// Space Grotesk gives headings and the brand a distinct, technical character.
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+  preload: true,
+})
+
+// JetBrains Mono for eyebrows, counters, and numeric/technical labels.
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
 })
 
 export const metadata: Metadata = {
@@ -20,7 +37,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport = {
-  themeColor: "#232326",
+  themeColor: "#f4f6fb",
   width: "device-width",
   initialScale: 1,
 }
@@ -31,11 +48,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${rubik.variable} bg-background`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} bg-background`}
+    >
       <body className="font-sans antialiased">
         <div className="app-gradient min-h-screen">
-          <SiteHeader />
-          {children}
+          <AppShell>{children}</AppShell>
         </div>
       </body>
     </html>

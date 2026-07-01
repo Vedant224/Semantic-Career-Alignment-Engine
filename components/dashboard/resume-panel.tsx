@@ -67,11 +67,11 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
 
   if (!result) {
     return (
-      <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card p-10 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-secondary text-primary">
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center">
+        <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-secondary text-accent ring-1 ring-inset ring-border">
           <FileText className="h-7 w-7" aria-hidden="true" />
         </span>
-        <h3 className="mt-4 text-xl font-semibold text-foreground">
+        <h3 className="mt-4 font-display text-xl font-semibold text-foreground">
           Your optimized resume appears here
         </h3>
         <p className="mt-1 max-w-sm text-sm text-muted-foreground">
@@ -83,35 +83,37 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border bg-secondary px-6 py-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-secondary-foreground">
-          <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex items-center justify-between border-b border-border px-6 py-4">
+        <div className="flex items-center gap-2.5 text-sm font-semibold text-foreground">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-accent ring-1 ring-inset ring-border">
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
+          </span>
           Optimized resume
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           <button
             onClick={handleDownloadLatex}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-foreground/25 hover:bg-secondary"
             title="Download as LaTeX file"
           >
-            <Code className="h-3.5 w-3.5" aria-hidden="true" />
+            <Code className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
             LaTeX
           </button>
           <button
             onClick={handleDownloadPdf}
             disabled={isExporting}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             title="Download as PDF"
           >
             <Download className="h-3.5 w-3.5" aria-hidden="true" />
-            {isExporting ? "Compiling LaTeX..." : "PDF"}
+            {isExporting ? "Compiling…" : "PDF"}
           </button>
         </div>
       </div>
 
       {notice && (
-        <div className="border-b border-border bg-[color:var(--partial)]/10 px-6 py-2.5 text-xs text-[color:var(--partial-foreground)]">
+        <div className="border-b border-border bg-[color:var(--partial)]/10 px-6 py-2.5 text-xs">
           <span className="text-foreground/80">{notice}</span>
         </div>
       )}
@@ -120,13 +122,13 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
       <div className="bg-secondary p-4 sm:p-6">
         {pdfStatus === "loading" && (
           <div className="flex h-[80vh] flex-col items-center justify-center gap-3 text-muted-foreground">
-            <Loader2 className="h-7 w-7 animate-spin text-primary" aria-hidden="true" />
+            <Loader2 className="h-7 w-7 animate-spin text-accent" aria-hidden="true" />
             <p className="text-sm">Compiling your resume with LaTeX…</p>
           </div>
         )}
         {pdfStatus === "error" && (
           <div className="flex h-[80vh] flex-col items-center justify-center gap-3 px-6 text-center text-muted-foreground">
-            <FileType className="h-8 w-8 text-primary" aria-hidden="true" />
+            <FileType className="h-8 w-8 text-accent" aria-hidden="true" />
             <p className="max-w-md text-sm">
               The LaTeX engine is temporarily unreachable, so the PDF can&apos;t be rendered right
               now. Use the PDF download button above — it falls back to a built-in generator so you

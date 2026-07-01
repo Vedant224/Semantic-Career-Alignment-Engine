@@ -4,8 +4,8 @@
 @layer base {
   html,
   body {
-    background-color: #f5f9f8;
-    color: #2c3e35;
+    background-color: #f4f5f7;
+    color: #15181f;
   }
 }
 
@@ -35,9 +35,9 @@
   --color-partial: var(--partial);
   --color-partial-foreground: var(--partial-foreground);
 
-  --font-sans: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SF Mono", monospace;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -46,44 +46,55 @@
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 
-  /* Enhanced wellness palette — vibrant emerald green, professional aesthetic */
-  --background: #f5f9f8;
-  --foreground: #2c3e35;
+  /* "Ink & Cobalt" — an editorial, high-trust palette, now more alive:
+     a confident cobalt→violet accent system carries energy while ink
+     primaries and cool neutrals keep it professional. No generic AI look:
+     no beige/cream, no soft uniform shadows, no glassmorphism. */
+
+  /* Cool paper canvas + true ink text */
+  --background: #f4f6fb;
+  --foreground: #14161f;
 
   --card: #ffffff;
-  --card-foreground: #2c3e35;
+  --card-foreground: #14161f;
 
   --popover: #ffffff;
-  --popover-foreground: #2c3e35;
+  --popover-foreground: #14161f;
 
-  /* Primary action — vibrant emerald green */
-  --primary: #2d9d6f;
+  /* Primary action — vibrant cobalt. Solid, punchy, no gradients. */
+  --primary: #3352ff;
   --primary-foreground: #ffffff;
 
-  /* Secondary accent — rich sage green */
-  --secondary: #5a8a7a;
-  --secondary-foreground: #ffffff;
+  /* Secondary — quiet cool-gray chip surface */
+  --secondary: #eef0f6;
+  --secondary-foreground: #2a2f3a;
 
-  --muted: #d1dcd9;
-  --muted-foreground: #667d76;
+  --muted: #eef0f6;
+  --muted-foreground: #5f6779;
 
-  --accent: #2d9d6f;
+  /* Accent — same vibrant cobalt for links, icons, focus */
+  --accent: #3352ff;
   --accent-foreground: #ffffff;
 
-  --border: #e0ebe7;
-  --input: #f5f9f8;
-  /* Focus border — emerald */
-  --ring: #2d9d6f;
+  --border: #e3e7f0;
+  --input: #ffffff;
+  /* Focus ring — cobalt */
+  --ring: #3352ff;
 
-  /* Semantic alignment states — refined wellness versions */
-  --match: #2d9d6f;
-  --match-foreground: #f0f7f4;
-  --gap: #a67d7d;
-  --gap-foreground: #faf5f5;
-  --partial: #c4a989;
-  --partial-foreground: #fdfcf9;
+  /* Semantic alignment states — saturated, functional, never pastel */
+  --match: #10935a;
+  --match-foreground: #ffffff;
+  --gap: #d23b47;
+  --gap-foreground: #ffffff;
+  --partial: #c47613;
+  --partial-foreground: #ffffff;
+
+  /* Navbar app-shell surface — deep ink so the bar feels like part of the app */
+  --nav: #15171f;
+  --nav-foreground: #eef0f6;
+  --nav-muted: #9aa1b6;
 }
 
 @layer base {
@@ -94,23 +105,48 @@
     background: var(--background);
     color: var(--foreground);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--accent) 22%, transparent);
+    color: var(--foreground);
   }
 }
 
-/* Solid warm page background — no gradient */
+/* Solid, clean canvas — no grid, no gradient. */
 .app-gradient {
   background: var(--background);
 }
 
-/* Structural panel surface — no blur, no elevation */
+/* Structural panel surface — flat, sharp border, no blur, no elevation */
 .glass-panel {
   background: var(--card);
+}
+
+/* Navbar shares the exact app canvas color so the header reads as one
+   continuous surface with the page — presence comes from content, not a bar. */
+.navbar-surface {
+  background-color: var(--background);
+}
+
+/* Display type helper */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Small uppercase eyebrow / label */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -119,5 +155,5 @@
 }
 
 .animate-fade-up {
-  animation: fade-up 0.5s ease both;
+  animation: fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
