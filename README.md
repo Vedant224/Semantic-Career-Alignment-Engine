@@ -215,8 +215,6 @@ npm run lint
 4. **Tailwind CSS 4** for modern, utility-first styling with no CSS bloat
 
 ### Future Enhancements
-
-- [x] **AWS Aurora PostgreSQL** persistence for career graphs (API routes + schema implemented)
 - [ ] ML embeddings (pgvector) for semantic similarity instead of token matching
 - [ ] AI-powered professional summary generation per role
 - [ ] Multi-page resume support with section reordering
