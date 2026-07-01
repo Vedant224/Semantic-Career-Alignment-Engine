@@ -17,6 +17,9 @@ export function AlignmentDashboard() {
   const [result, setResult] = useState<AlignmentResult | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  // Preview vs. edit is lifted here so the whole workspace can reflow:
+  // editing expands to a full-width editor + live preview split.
+  const [mode, setMode] = useState<"preview" | "edit">("preview")
 
   function analyze() {
     setError(null)
@@ -24,15 +27,26 @@ export function AlignmentDashboard() {
       try {
         const res = await alignToJobDescription(jd)
         setResult(res)
+        setMode("preview")
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong.")
       }
     })
   }
 
+  const editing = mode === "edit" && !!result
+
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,460px)_minmax(0,1fr)] lg:items-start">
-      {/* Left: editor column — paste the role, read the score. Scrolls. */}
+    <div
+      className={cn(
+        editing
+          ? "block"
+          : "grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,460px)_minmax(0,1fr)] lg:items-start",
+      )}
+    >
+      {/* Left: editor column — paste the role, read the score. Hidden while
+          editing the resume so the editor + preview get the full width. */}
+      {!editing && (
       <div className="flex flex-col gap-6 animate-fade-up">
         {/* Stage 1 — paste the target role */}
         <section className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -95,10 +109,11 @@ export function AlignmentDashboard() {
         {/* Stage 2 — alignment score */}
         {result && <AlignmentSummary result={result} />}
       </div>
+      )}
 
-      {/* Right: live resume preview — pinned so it stays in view while editing */}
-      <div className="animate-fade-up lg:sticky lg:top-24 lg:self-start">
-        <ResumePanel result={result} />
+      {/* Right: resume — preview pins beside the rail; editing takes full width */}
+      <div className={cn("animate-fade-up", editing ? "" : "lg:sticky lg:top-24 lg:self-start")}>
+        <ResumePanel result={result} mode={mode} onModeChange={setMode} />
       </div>
     </div>
   )
