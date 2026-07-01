@@ -2,11 +2,11 @@
 
 import { useState, useTransition } from "react"
 import { Loader2, Sparkles, ClipboardPaste, ArrowRight } from "lucide-react"
-import { alignToJobDescription } from "@/app/actions"
-import type { AlignmentResult } from "@/lib/types"
 import { ResumePanel } from "./resume-panel"
 import { AlignmentSummary } from "./alignment-summary"
 import { cn } from "@/lib/utils"
+import { useCareerData } from "@/lib/use-career-data"
+import type { AlignmentResult } from "@/lib/types"
 
 const SAMPLE_JD = `Senior Full-Stack Engineer
 
@@ -20,12 +20,29 @@ export function AlignmentDashboard() {
   // Preview vs. edit is lifted here so the whole workspace can reflow:
   // editing expands to a full-width editor + live preview split.
   const [mode, setMode] = useState<"preview" | "edit">("preview")
+  
+  const { graph } = useCareerData()
 
   function analyze() {
     setError(null)
     startTransition(async () => {
       try {
-        const res = await alignToJobDescription(jd)
+        if (!graph) {
+          throw new Error("Career graph is empty or still loading.")
+        }
+
+        const response = await fetch("/api/align", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ careerGraph: graph, jobDescription: jd }),
+        })
+
+        if (!response.ok) {
+          const errData = await response.json()
+          throw new Error(errData.error || "Failed to align job description")
+        }
+
+        const res = await response.json()
         setResult(res)
         setMode("preview")
       } catch (e) {

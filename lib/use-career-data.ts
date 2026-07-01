@@ -6,6 +6,7 @@ import {
   getSupabaseClient,
   isSupabaseConfigured,
 } from "@/lib/supabase";
+import { getCareerGraph } from "@/lib/career-store";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -48,7 +49,22 @@ function loadFromLocalStorage(): CareerGraph | null {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as CareerGraph;
+    
+    const parsed = JSON.parse(raw);
+    
+    // Check if it uses the new wrapped format { data, timestamp }
+    if (parsed && typeof parsed === "object" && "timestamp" in parsed && "data" in parsed) {
+      const ONE_DAY = 24 * 60 * 60 * 1000;
+      if (Date.now() - parsed.timestamp > ONE_DAY) {
+        console.log("[useCareerData] Local storage data expired (older than 1 day). Clearing.");
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        return null;
+      }
+      return parsed.data as CareerGraph;
+    }
+    
+    // Legacy format fallback (no expiration)
+    return parsed as CareerGraph;
   } catch {
     console.warn("[useCareerData] Failed to parse localStorage data");
     return null;
@@ -58,7 +74,11 @@ function loadFromLocalStorage(): CareerGraph | null {
 function saveToLocalStorage(graph: CareerGraph): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(graph));
+    const payload = {
+      data: graph,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(payload));
   } catch (err) {
     console.error("[useCareerData] Failed to write to localStorage:", err);
   }
@@ -97,6 +117,12 @@ async function loadFromSupabase(
   if (error) {
     // PGRST116 = "no rows returned" — not a real error for us.
     if ((error as { code?: string }).code === "PGRST116") return null;
+    
+    // Check if relation does not exist (user didn't run SQL script)
+    if ((error as { code?: string }).code === "42P01") {
+      throw new Error("Supabase table 'career_profiles' does not exist. Please run the SQL setup script.");
+    }
+    
     throw new Error(
       `Supabase load failed: ${(error as { message: string }).message}`
     );
@@ -123,6 +149,9 @@ async function saveToSupabase(
   );
 
   if (error) {
+    if ((error as { code?: string }).code === "42P01") {
+      throw new Error("Supabase table 'career_profiles' does not exist. Please run the SQL setup script.");
+    }
     throw new Error(
       `Supabase save failed: ${(error as { message: string }).message}`
     );
@@ -173,7 +202,12 @@ export function useCareerData(): UseCareerDataReturn {
         loaded = loadFromLocalStorage();
       }
 
-      if (loaded) setGraph(loaded);
+      if (loaded) {
+        setGraph(loaded);
+      } else {
+        const fallback = await getCareerGraph();
+        setGraph(fallback);
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to load data";
       setError(msg);

@@ -1,9 +1,6 @@
-import { fetchCareerGraph } from "@/app/actions"
 import { CareerGraphForm } from "@/components/career-graph/career-graph-form"
 
-export default async function CareerGraphPage() {
-  const graph = await fetchCareerGraph()
-
+export default function CareerGraphPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
       <div className="mb-10 max-w-2xl border-b border-border pb-9">
@@ -21,7 +18,7 @@ export default async function CareerGraphPage() {
         </p>
       </div>
 
-      <CareerGraphForm initialGraph={graph} />
+      <CareerGraphForm />
     </main>
   )
 }

@@ -29,6 +29,9 @@ import type {
 } from "@/lib/types"
 import { SKILL_CATEGORIES } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { useCareerData } from "@/lib/use-career-data"
+import { DataManager } from "@/components/career-graph/data-manager"
+import { Cloud, HardDrive } from "lucide-react"
 
 const LEVELS: Skill["level"][] = ["Beginner", "Intermediate", "Advanced", "Expert"]
 
@@ -36,27 +39,44 @@ function uid(prefix: string) {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}`
 }
 
-export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph }) {
-  const [graph, setGraph] = useState<CareerGraph>(initialGraph)
+export function CareerGraphForm() {
+  const {
+    graph,
+    isLoading,
+    isSaving,
+    storageMode,
+    isCloudAvailable,
+    save,
+    setGraph,
+    toggleStorageMode,
+    error,
+  } = useCareerData()
+
   const [saved, setSaved] = useState(false)
-  const [isPending, startTransition] = useTransition()
+
+  if (isLoading || !graph) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   function update(patch: Partial<CareerGraph>) {
-    setGraph((g) => ({ ...g, ...patch }))
+    setGraph({ ...graph!, ...patch })
     setSaved(false)
   }
 
   function updateContact(patch: Partial<CareerGraph["contact"]>) {
-    setGraph((g) => ({ ...g, contact: { ...g.contact, ...patch } }))
+    setGraph({ ...graph!, contact: { ...graph!.contact, ...patch } })
     setSaved(false)
   }
 
-  function save() {
-    startTransition(async () => {
-      await updateCareerGraph(graph)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2500)
-    })
+  async function handleSave() {
+    if (!graph) return
+    await save(graph)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
   }
 
   // ----- Skills -----
@@ -183,6 +203,54 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
       <SectionNav />
 
       <div className="space-y-8">
+      
+      {/* Error Banner */}
+      {error && (
+        <div className="rounded-lg bg-destructive/15 p-4 text-sm text-destructive border border-destructive/20">
+          <strong>Data Error:</strong> {error}
+        </div>
+      )}
+
+      {/* Top Bar with Data Manager & Storage Mode */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-border bg-card p-6">
+        <div>
+          <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Data Management</h2>
+          <p className="text-xs text-muted-foreground">Import, export, and choose where your graph is saved.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-4">
+          <DataManager graph={graph} onImport={(g) => setGraph(g)} />
+          
+          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 p-1">
+            <button
+              type="button"
+              onClick={toggleStorageMode}
+              disabled={storageMode === "local"}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+                storageMode === "local" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <HardDrive className="h-3.5 w-3.5" />
+              Local
+            </button>
+            <button
+              type="button"
+              onClick={toggleStorageMode}
+              disabled={storageMode === "cloud" || !isCloudAvailable}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+                storageMode === "cloud" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                !isCloudAvailable && "opacity-50 cursor-not-allowed"
+              )}
+              title={!isCloudAvailable ? "Supabase not configured in .env.local" : "Save to Supabase"}
+            >
+              <Cloud className="h-3.5 w-3.5" />
+              Cloud
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Profile */}
       <Card id="profile" icon={User} title="Profile" subtitle="The headline that anchors your generated resume">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -573,22 +641,22 @@ export function CareerGraphForm({ initialGraph }: { initialGraph: CareerGraph })
         </p>
         <button
           type="button"
-          onClick={save}
-          disabled={isPending}
+          onClick={handleSave}
+          disabled={isSaving}
           className={cn(
             "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-primary-foreground transition",
             saved ? "bg-[color:var(--match)]" : "bg-primary hover:opacity-90",
             "disabled:opacity-60",
           )}
         >
-          {isPending ? (
+          {isSaving ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
           ) : saved ? (
             <Check className="h-4 w-4" aria-hidden="true" />
           ) : (
             <Save className="h-4 w-4" aria-hidden="true" />
           )}
-          {isPending ? "Saving" : saved ? "Saved" : "Save career graph"}
+          {isSaving ? "Saving" : saved ? "Saved" : "Save career graph"}
         </button>
       </div>
       </div>

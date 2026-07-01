@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Type } from "@google/genai";
-import type { CareerGraph } from "@/lib/types";
+import type { CareerGraph, AlignmentResult } from "@/lib/types";
+import { runAlignment } from "@/lib/matching";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -285,13 +286,28 @@ Be accurate and grounded in the data provided. Do not fabricate skills or metric
 
         const structured = JSON.parse(text) as AlignResponse;
 
-        return NextResponse.json({
-          alignmentScore: structured.alignmentScore,
-          deterministicScore,
-          skillAnalysis: structured.skillAnalysis,
-          tailoredBullets: structured.tailoredBullets,
-          source: "gemini",
-        });
+        // Generate base result and weave in AI enhancements
+        const baseResult = runAlignment(careerGraph, jobDescription);
+        
+        baseResult.score = structured.alignmentScore;
+        baseResult.matched = structured.skillAnalysis.matched.map((s: string) => ({ skill: s, status: "match", similarity: 1 }));
+        baseResult.partial = structured.skillAnalysis.partial.map((s: string) => ({ skill: s, status: "partial", similarity: 0.5 }));
+        baseResult.gaps = structured.skillAnalysis.missing.map((s: string) => ({ skill: s, status: "gap", similarity: 0 }));
+        baseResult.jobSkills = [
+          ...structured.skillAnalysis.matched,
+          ...structured.skillAnalysis.partial,
+          ...structured.skillAnalysis.missing
+        ];
+        
+        // Inject tailored bullets into the most recent experience
+        if (baseResult.resume.experiences.length > 0 && structured.tailoredBullets.length > 0) {
+            baseResult.resume.experiences[0].bullets = structured.tailoredBullets.map((text: string) => ({
+                text,
+                emphasized: true
+            }));
+        }
+
+        return NextResponse.json(baseResult);
       } catch (llmErr) {
         console.error(
           "[align] LLM generation failed, returning deterministic result:",
@@ -303,48 +319,8 @@ Be accurate and grounded in the data provided. Do not fabricate skills or metric
 
     // ── 6. Fallback: deterministic-only response ──────────────────────────
     // If Gemini is not available or failed, return what we can compute locally.
-    const skillNames = careerGraph.skills.map((s) => s.name.toLowerCase());
-    const jdLower = jobDescription.toLowerCase();
-
-    const matched = careerGraph.skills
-      .filter((s) => jdLower.includes(s.name.toLowerCase()))
-      .map((s) => s.name);
-
-    const allJdTerms = jobDescription
-      .split(/[\s,;.()]+/)
-      .filter((t) => t.length > 2)
-      .map((t) => t.toLowerCase());
-
-    const missing = allJdTerms
-      .filter(
-        (term) =>
-          !skillNames.some(
-            (sn) => sn.includes(term) || term.includes(sn)
-          )
-      )
-      .filter(
-        (term) =>
-          // Only keep terms that look like technical skills
-          /^[a-z][a-z0-9+#.]*$/i.test(term) && term.length > 3
-      )
-      .slice(0, 10);
-
-    return NextResponse.json({
-      alignmentScore: deterministicScore,
-      deterministicScore,
-      skillAnalysis: {
-        matched,
-        partial: [] as string[],
-        missing: [...new Set(missing)],
-      },
-      tailoredBullets: careerGraph.experiences.flatMap((exp) =>
-        exp.description
-          .split(/(?<=[.!?])\s+/)
-          .filter(Boolean)
-          .slice(0, 2)
-      ),
-      source: "deterministic",
-    });
+    const baseResult = runAlignment(careerGraph, jobDescription);
+    return NextResponse.json(baseResult);
   } catch (err) {
     console.error("[align] Unhandled error:", err);
     return NextResponse.json(
