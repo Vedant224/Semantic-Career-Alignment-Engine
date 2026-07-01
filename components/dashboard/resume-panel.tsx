@@ -118,16 +118,16 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
         </div>
       )}
 
-      {/* True LaTeX-compiled PDF */}
-      <div className="bg-secondary p-4 sm:p-6">
+      {/* True LaTeX-compiled PDF — the live preview, pinned beside the editor */}
+      <div className="bg-secondary p-3 sm:p-4">
         {pdfStatus === "loading" && (
-          <div className="flex h-[80vh] flex-col items-center justify-center gap-3 text-muted-foreground">
+          <div className="flex h-[calc(100vh-9.5rem)] min-h-[520px] flex-col items-center justify-center gap-3 text-muted-foreground">
             <Loader2 className="h-7 w-7 animate-spin text-accent" aria-hidden="true" />
             <p className="text-sm">Compiling your resume with LaTeX…</p>
           </div>
         )}
         {pdfStatus === "error" && (
-          <div className="flex h-[80vh] flex-col items-center justify-center gap-3 px-6 text-center text-muted-foreground">
+          <div className="flex h-[calc(100vh-9.5rem)] min-h-[520px] flex-col items-center justify-center gap-3 px-6 text-center text-muted-foreground">
             <FileType className="h-8 w-8 text-accent" aria-hidden="true" />
             <p className="max-w-md text-sm">
               The LaTeX engine is temporarily unreachable, so the PDF can&apos;t be rendered right
@@ -140,7 +140,7 @@ export function ResumePanel({ result }: { result: AlignmentResult | null }) {
           <iframe
             src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
             title="Compiled LaTeX resume PDF"
-            className="h-[80vh] w-full rounded-lg border border-border bg-card"
+            className="h-[calc(100vh-9.5rem)] min-h-[520px] w-full rounded-lg border border-border bg-card"
           />
         )}
       </div>
