@@ -36,42 +36,60 @@ export function ResumePanel({
   const [notice, setNotice] = useState<string | null>(null)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [pdfStatus, setPdfStatus] = useState<"idle" | "loading" | "error">("idle")
+  // True while there are edits waiting for the debounce to settle (no request yet).
+  const [pending, setPending] = useState(false)
 
   // Editable copy of the generated resume — edits here drive the live preview.
   const [resume, setResume] = useState<GeneratedResume | null>(result?.resume ?? null)
 
   const resultRef = useRef(result)
   resultRef.current = result
+  // Serialized resume that was last sent to the compiler — used to skip
+  // redundant requests (e.g. toggling a value back, or re-renders).
+  const lastCompiledRef = useRef<string>("")
 
   // Reset the editable resume whenever a fresh analysis arrives.
   useEffect(() => {
     setResume(result?.resume ?? null)
   }, [result])
 
-  // Recompile the true LaTeX PDF (debounced) whenever the edited resume changes.
+  // Recompile the true LaTeX PDF only after the user pauses typing (debounced),
+  // and only if the content actually changed — keeps server requests to a minimum.
   useEffect(() => {
     const base = resultRef.current
     if (!base || !resume) return
+
+    const key = JSON.stringify(resume)
+    if (key === lastCompiledRef.current) {
+      setPending(false)
+      return
+    }
+
+    setPending(true)
     let cancelled = false
-    let createdUrl: string | null = null
-    setPdfStatus("loading")
     const timer = setTimeout(() => {
+      setPending(false)
+      setPdfStatus("loading")
       compileResumePdf({ ...base, resume })
         .then((blob) => {
           if (cancelled) return
-          createdUrl = URL.createObjectURL(blob)
-          setPdfUrl(createdUrl)
+          const url = URL.createObjectURL(blob)
+          setPdfUrl((prev) => {
+            if (prev) URL.revokeObjectURL(prev)
+            return url
+          })
+          lastCompiledRef.current = key
           setPdfStatus("idle")
         })
         .catch((error) => {
           console.log("[v0] PDF preview compile failed:", error)
           if (!cancelled) setPdfStatus("error")
         })
-    }, 700)
+    }, 1500)
+
     return () => {
       cancelled = true
       clearTimeout(timer)
-      if (createdUrl) URL.revokeObjectURL(createdUrl)
     }
   }, [resume])
 
@@ -195,10 +213,16 @@ export function ResumePanel({
             <div className="flex items-center gap-2 border-b border-border bg-secondary/60 px-4 py-2 text-xs font-medium text-muted-foreground sm:px-5">
               {pdfStatus === "loading" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" aria-hidden="true" />
+              ) : pending ? (
+                <span className="h-2 w-2 rounded-full bg-[color:var(--partial)]" aria-hidden="true" />
               ) : (
                 <span className="h-2 w-2 rounded-full bg-[color:var(--match)]" aria-hidden="true" />
               )}
-              {pdfStatus === "loading" ? "Rebuilding preview…" : "Live preview"}
+              {pdfStatus === "loading"
+                ? "Rebuilding preview…"
+                : pending
+                  ? "Edits pending — preview updates when you pause typing"
+                  : "Live preview"}
             </div>
             <div className="bg-secondary p-3 lg:h-[calc(100vh-12rem)] lg:min-h-[560px]">
               <PreviewArea pdfStatus={pdfStatus} pdfUrl={pdfUrl} full />
