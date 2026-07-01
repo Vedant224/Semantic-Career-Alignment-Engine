@@ -138,15 +138,53 @@ async function saveToSupabase(
 ): Promise<void> {
   const supabase = getSupabaseClient();
 
-  // Upsert: if a row with this user_name exists, update it; otherwise insert.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from("career_profiles").upsert(
-    {
-      user_name: userName,
-      profile_data: graph,
-    },
-    { onConflict: "user_name" }
-  );
+  // 1. Generate overall profile embedding
+  const profileString = [
+    graph.headline,
+    "Skills: " + graph.skills.map(s => s.name).join(", "),
+    "Experience: " + graph.experiences.map(e => `${e.role} at ${e.company}. ${e.description}`).join(" ")
+  ].join("\n");
+
+  let embedding: number[] | null = null;
+  try {
+    const res = await fetch("/api/embed", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ inputs: [profileString] }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.embeddings && data.embeddings[0]) {
+        embedding = data.embeddings[0];
+      }
+    }
+  } catch (err) {
+    console.warn("[saveToSupabase] Failed to generate embedding:", err);
+  }
+
+  // First, check if a profile already exists for this user
+  const { data: existing } = await (supabase as any)
+    .from("career_profiles")
+    .select("id")
+    .eq("user_name", userName)
+    .limit(1)
+    .maybeSingle();
+
+  let error;
+  if (existing?.id) {
+    // Update existing profile
+    const result = await (supabase as any)
+      .from("career_profiles")
+      .update({ profile_data: graph, embedding })
+      .eq("id", existing.id);
+    error = result.error;
+  } else {
+    // Insert new profile
+    const result = await (supabase as any)
+      .from("career_profiles")
+      .insert({ user_name: userName, profile_data: graph, embedding });
+    error = result.error;
+  }
 
   if (error) {
     if ((error as { code?: string }).code === "42P01") {

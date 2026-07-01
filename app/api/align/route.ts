@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI, Type } from "@google/genai";
-import type { CareerGraph, AlignmentResult } from "@/lib/types";
+import type { CareerGraph, AlignmentResult, SkillAlignment } from "@/lib/types";
+import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 import { runAlignment } from "@/lib/matching";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -10,325 +11,182 @@ interface AlignRequest {
   jobDescription: string;
 }
 
-interface SkillAnalysis {
-  matched: string[];
-  partial: string[];
-  missing: string[];
+interface JdRequirementsResponse {
+  requirements: string[];
 }
 
-interface AlignResponse {
-  alignmentScore: number;
-  skillAnalysis: SkillAnalysis;
+interface TailoredBulletsResponse {
   tailoredBullets: string[];
 }
 
-// ─── Math utilities ─────────────────────────────────────────────────────────
-
-/**
- * Compute cosine similarity between two vectors.
- * Returns a value in [-1, 1]; 1 means identical direction.
- */
-function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length || a.length === 0) return 0;
-
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-
-  for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-
-  const denominator = Math.sqrt(normA) * Math.sqrt(normB);
-  if (denominator === 0) return 0;
-
-  return dotProduct / denominator;
-}
-
-/**
- * Very lightweight text → numeric vector for deterministic local scoring.
- * NOT a real embedding — just a bag-of-characters frequency vector.
- * Used only as a fallback when the Gemini API is unavailable.
- */
-function naiveTextVector(text: string): number[] {
-  const lower = text.toLowerCase().replace(/[^a-z0-9 ]/g, "");
-  // 36 buckets: a-z + 0-9
-  const vec = new Array(36).fill(0);
-  for (const ch of lower) {
-    if (ch === " ") continue;
-    const code = ch.charCodeAt(0);
-    if (code >= 97 && code <= 122) vec[code - 97]++;
-    else if (code >= 48 && code <= 57) vec[26 + code - 48]++;
-  }
-  // L2 normalize
-  const norm = Math.sqrt(vec.reduce((s: number, v: number) => s + v * v, 0));
-  if (norm > 0) for (let i = 0; i < vec.length; i++) vec[i] /= norm;
-  return vec;
-}
-
-// ─── Gemini client ──────────────────────────────────────────────────────────
+// ─── Gemini Utilities ───────────────────────────────────────────────────────
 
 function getGeminiClient(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error(
-      "GEMINI_API_KEY is not set. Add it to your .env.local file."
-    );
+    throw new Error("GEMINI_API_KEY is not set.");
   }
   return new GoogleGenAI({ apiKey });
 }
 
-/**
- * Generate an embedding using Gemini text-embedding-004.
- */
-async function generateEmbedding(
+async function generateEmbeddings(
   client: GoogleGenAI,
-  text: string
-): Promise<number[]> {
+  texts: string[]
+): Promise<number[][]> {
   const result = await client.models.embedContent({
     model: "text-embedding-004",
-    contents: text,
+    contents: texts,
   });
 
-  const values = result.embeddings?.[0]?.values;
-  if (!values || values.length === 0) {
-    throw new Error("Gemini returned empty embedding.");
+  const embeddings = result.embeddings?.map((e) => e.values) || [];
+  if (embeddings.length === 0 || embeddings.length !== texts.length) {
+    throw new Error("Failed to generate embeddings for all inputs.");
   }
-  return values;
+  return embeddings;
 }
-
-// ─── Structured Output Schema ───────────────────────────────────────────────
-
-const ALIGN_RESPONSE_SCHEMA = {
-  type: Type.OBJECT,
-  properties: {
-    alignmentScore: {
-      type: Type.NUMBER,
-      description:
-        "Overall alignment percentage (0-100) of the candidate to the job.",
-    },
-    skillAnalysis: {
-      type: Type.OBJECT,
-      properties: {
-        matched: {
-          type: Type.ARRAY,
-          items: { type: Type.STRING },
-          description:
-            "Skills the candidate fully matches from the JD requirements.",
-        },
-        partial: {
-          type: Type.ARRAY,
-          items: { type: Type.STRING },
-          description:
-            "Skills the candidate partially matches (related experience but not exact).",
-        },
-        missing: {
-          type: Type.ARRAY,
-          items: { type: Type.STRING },
-          description:
-            "Skills required by the JD that the candidate lacks entirely.",
-        },
-      },
-      required: ["matched", "partial", "missing"],
-    },
-    tailoredBullets: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING },
-      description:
-        "ATS-optimized resume bullet points tailored to the target JD. Each bullet should start with a strong action verb and include metrics where possible.",
-    },
-  },
-  required: ["alignmentScore", "skillAnalysis", "tailoredBullets"],
-};
 
 // ─── Route handler ──────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // ── 1. Parse & validate request ───────────────────────────────────────
     const body = (await request.json()) as AlignRequest;
-
     if (!body.careerGraph || !body.jobDescription) {
-      return NextResponse.json(
-        { error: "Both 'careerGraph' and 'jobDescription' are required." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-
     const { careerGraph, jobDescription } = body;
+    const client = getGeminiClient();
 
-    if (jobDescription.trim().length < 20) {
-      return NextResponse.json(
-        { error: "Job description is too short. Provide at least 20 characters." },
-        { status: 400 }
-      );
-    }
+    // ========================================================================
+    // PHASE 1: VECTOR ENGINE (The Brain)
+    // ========================================================================
+    
+    // 1a. Extract JD Requirements
+    const reqExtractionPrompt = `Extract a list of the core technical and soft skill requirements from this Job Description. Return ONLY a JSON array of strings under the "requirements" key.\n\nJob Description:\n${jobDescription}`;
+    const reqRes = await client.models.generateContent({
+      model: "gemini-flash-latest",
+      contents: reqExtractionPrompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: { requirements: { type: Type.ARRAY, items: { type: Type.STRING } } },
+          required: ["requirements"]
+        },
+        temperature: 0.1,
+      },
+    });
+    const jdRequirements = (JSON.parse(reqRes.text!) as JdRequirementsResponse).requirements;
 
-    // ── 2. Generate JD embedding ──────────────────────────────────────────
-    let jdEmbedding: number[] | null = null;
-    let geminiAvailable = true;
-    let client: GoogleGenAI | null = null;
+    // 1b. Embed JD Requirements & Profile Skills
+    const profileSkills = careerGraph.skills.map((s) => s.name);
+    
+    let similarities: number[] = [];
+    let matchedSkills: string[] = [];
+    let partialSkills: string[] = [];
+    let missingSkills: string[] = [];
 
-    try {
-      client = getGeminiClient();
-      jdEmbedding = await generateEmbedding(client, jobDescription);
-    } catch (err) {
-      console.warn(
-        "[align] Gemini embedding unavailable, falling back to local scoring:",
-        err instanceof Error ? err.message : err
-      );
-      geminiAvailable = false;
-    }
+    // Only run vector math if we have skills to compare and Supabase is configured
+    if (jdRequirements.length > 0 && profileSkills.length > 0 && isSupabaseConfigured()) {
+      const [jdEmbeddings, skillEmbeddings] = await Promise.all([
+        generateEmbeddings(client, jdRequirements),
+        generateEmbeddings(client, profileSkills)
+      ]);
 
-    // ── 3. (Optional) Supabase similarity lookup ──────────────────────────
-    // If the user's data is stored in Supabase and we have a real embedding,
-    // we could query `match_career_profiles` here. This is left as a
-    // conceptual placeholder — the caller can pass the career graph directly.
-    //
-    // Example (uncomment when ready):
-    // if (jdEmbedding && isSupabaseConfigured()) {
-    //   const supabase = getSupabaseClient();
-    //   const { data } = await supabase.rpc('match_career_profiles', {
-    //     query_embedding: jdEmbedding,
-    //     match_threshold: 0.5,
-    //     match_count: 3,
-    //   });
-    //   // data contains the closest historical profiles
-    // }
+      // 1c. Calculate Cosine Similarity mathematically using Supabase pgvector
+      const supabase = getSupabaseClient();
+      const { data, error } = await supabase.rpc("get_max_similarities", {
+        target_embeddings: jdEmbeddings,
+        skill_embeddings: skillEmbeddings,
+      });
 
-    // ── 4. Deterministic alignment score (local fallback) ─────────────────
-    let deterministicScore = 0;
+      if (error) {
+        console.error("[Vector Engine] Supabase RPC failed:", error);
+        throw error;
+      }
+      similarities = data as number[];
 
-    if (jdEmbedding) {
-      // Build a text representation of the career graph for embedding
-      const graphText = [
-        careerGraph.headline,
-        ...careerGraph.skills.map((s) => s.name),
-        ...careerGraph.experiences.map(
-          (e) => `${e.role} at ${e.company}: ${e.description}`
-        ),
-        ...careerGraph.projects.map((p) => `${p.name}: ${p.description}`),
-      ].join(". ");
-
-      try {
-        const graphEmbedding = await generateEmbedding(client!, graphText);
-        deterministicScore = Math.round(
-          cosineSimilarity(jdEmbedding, graphEmbedding) * 100
-        );
-      } catch {
-        // Fall through to naive scoring
-        const jdVec = naiveTextVector(jobDescription);
-        const graphVec = naiveTextVector(graphText);
-        deterministicScore = Math.round(
-          cosineSimilarity(jdVec, graphVec) * 100
-        );
+      // 1d. Objective Skill Analysis based on Math
+      for (let i = 0; i < jdRequirements.length; i++) {
+        const req = jdRequirements[i];
+        const sim = similarities[i] || 0;
+        
+        if (sim >= 0.75) {
+          matchedSkills.push(req);
+        } else if (sim >= 0.60) {
+          partialSkills.push(req);
+        } else {
+          missingSkills.push(req);
+        }
       }
     } else {
-      // Fully local: use naive text vectors
-      const graphText = [
-        careerGraph.headline,
-        ...careerGraph.skills.map((s) => s.name),
-        ...careerGraph.experiences.map((e) => e.description),
-      ].join(". ");
-
-      const jdVec = naiveTextVector(jobDescription);
-      const graphVec = naiveTextVector(graphText);
-      deterministicScore = Math.round(
-        cosineSimilarity(jdVec, graphVec) * 100
-      );
+      // Fallback if no skills or DB not configured
+      missingSkills = jdRequirements;
     }
 
-    // ── 5. LLM-generated structured output ────────────────────────────────
-    if (geminiAvailable && client) {
-      const prompt = `You are an expert ATS resume optimizer and career alignment analyst.
+    // 1e. Objective Mathematical Alignment Score
+    const totalReqs = jdRequirements.length || 1;
+    const mathScore = Math.round(((matchedSkills.length + partialSkills.length * 0.5) / totalReqs) * 100);
 
-## Job Description
-${jobDescription}
 
-## Candidate Career Graph (JSON)
-${JSON.stringify(careerGraph, null, 2)}
+    // ========================================================================
+    // PHASE 2: GEN AI ENGINE (The Writer)
+    // ========================================================================
+    
+    const writerPrompt = `You are an expert ATS resume optimizer.
+Here are the mathematically proven targeted insights for this candidate against the Job Description:
+- MATCHED Requirements: ${matchedSkills.join(", ") || "None"}
+- PARTIAL Requirements: ${partialSkills.join(", ") || "None"}
+- MISSING Requirements (Gaps): ${missingSkills.join(", ") || "None"}
 
-## Your Task
-Analyze the candidate's career graph against the job description and produce:
+Candidate Career Graph:
+${JSON.stringify(careerGraph.experiences, null, 2)}
 
-1. **alignmentScore**: An honest percentage (0-100) reflecting how well the candidate matches the JD requirements. Consider skills, experience level, and domain relevance.
+Your Task:
+Act as the "Writer" to rewrite the candidate's resume bullets. Focus entirely on bridging the gaps and highlighting the matches.
+Provide 6-10 ATS-optimized resume bullet points that incorporate metrics, action verbs, and these targeted insights.`;
 
-2. **skillAnalysis**: Categorize the JD requirements into:
-   - **matched**: Skills/technologies the candidate clearly possesses (direct match in skills or demonstrated in experience/projects).
-   - **partial**: Skills the candidate has related but not exact experience with.
-   - **missing**: Skills required by the JD that the candidate lacks.
-
-3. **tailoredBullets**: 6-10 ATS-optimized resume bullet points that:
-   - Start with strong action verbs (Led, Engineered, Architected, Implemented, etc.)
-   - Incorporate metrics and quantified impact from the career graph
-   - Mirror keywords and phrases from the JD for maximum ATS compatibility
-   - Prioritize experiences and projects most relevant to this specific role
-
-Be accurate and grounded in the data provided. Do not fabricate skills or metrics.`;
-
-      try {
-        const result = await client.models.generateContent({
-          model: "gemini-flash-latest",
-          contents: prompt,
-          config: {
-            responseMimeType: "application/json",
-            responseSchema: ALIGN_RESPONSE_SCHEMA,
-            temperature: 0.3,
-          },
-        });
-
-        const text = result.text;
-        if (!text) {
-          throw new Error("Gemini returned empty response.");
-        }
-
-        const structured = JSON.parse(text) as AlignResponse;
-
-        // Generate base result and weave in AI enhancements
-        const baseResult = runAlignment(careerGraph, jobDescription);
-        
-        baseResult.score = structured.alignmentScore;
-        baseResult.matched = structured.skillAnalysis.matched.map((s: string) => ({ skill: s, status: "match", similarity: 1 }));
-        baseResult.partial = structured.skillAnalysis.partial.map((s: string) => ({ skill: s, status: "partial", similarity: 0.5 }));
-        baseResult.gaps = structured.skillAnalysis.missing.map((s: string) => ({ skill: s, status: "gap", similarity: 0 }));
-        baseResult.jobSkills = [
-          ...structured.skillAnalysis.matched,
-          ...structured.skillAnalysis.partial,
-          ...structured.skillAnalysis.missing
-        ];
-        
-        // Inject tailored bullets into the most recent experience
-        if (baseResult.resume.experiences.length > 0 && structured.tailoredBullets.length > 0) {
-            baseResult.resume.experiences[0].bullets = structured.tailoredBullets.map((text: string) => ({
-                text,
-                emphasized: true
-            }));
-        }
-
-        return NextResponse.json(baseResult);
-      } catch (llmErr) {
-        console.error(
-          "[align] LLM generation failed, returning deterministic result:",
-          llmErr instanceof Error ? llmErr.message : llmErr
-        );
-        // Fall through to deterministic-only response
-      }
-    }
-
-    // ── 6. Fallback: deterministic-only response ──────────────────────────
-    // If Gemini is not available or failed, return what we can compute locally.
-    const baseResult = runAlignment(careerGraph, jobDescription);
-    return NextResponse.json(baseResult);
-  } catch (err) {
-    console.error("[align] Unhandled error:", err);
-    return NextResponse.json(
-      {
-        error:
-          err instanceof Error ? err.message : "Internal server error",
+    const writerRes = await client.models.generateContent({
+      model: "gemini-flash-latest",
+      contents: writerPrompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: { tailoredBullets: { type: Type.ARRAY, items: { type: Type.STRING } } },
+          required: ["tailoredBullets"]
+        },
+        temperature: 0.3,
       },
+    });
+
+    const tailoredBullets = (JSON.parse(writerRes.text!) as TailoredBulletsResponse).tailoredBullets;
+
+    // ========================================================================
+    // Build the final AlignmentResult response
+    // ========================================================================
+    
+    const baseResult = runAlignment(careerGraph, jobDescription);
+    baseResult.score = mathScore;
+    baseResult.jobSkills = jdRequirements;
+    baseResult.matched = matchedSkills.map((s) => ({ skill: s, status: "match", similarity: 1 }));
+    baseResult.partial = partialSkills.map((s) => ({ skill: s, status: "partial", similarity: 0.5 }));
+    baseResult.gaps = missingSkills.map((s) => ({ skill: s, status: "gap", similarity: 0 }));
+
+    if (baseResult.resume.experiences.length > 0 && tailoredBullets.length > 0) {
+      baseResult.resume.experiences[0].bullets = tailoredBullets.map((text: string) => ({
+        text,
+        emphasized: true
+      }));
+    }
+
+    return NextResponse.json(baseResult);
+
+  } catch (err) {
+    console.error("[align] Pipeline failed:", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
       { status: 500 }
     );
   }
 }
+
