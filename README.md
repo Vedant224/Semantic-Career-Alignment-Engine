@@ -94,20 +94,9 @@ The Semantic Career Alignment Engine helps professionals:
 3. **Set up environment variables** (optional, if using the database):
    Create a `.env.local` file in the project root:
    ```bash
-   # AWS Aurora PostgreSQL with IAM authentication
-   PGHOST=your-aurora-cluster.xxxx.us-east-1.rds.amazonaws.com
-   PGDATABASE=postgres
-   PGUSER=postgres
-   AWS_REGION=us-east-1
-   AWS_ROLE_ARN=arn:aws:iam::ACCOUNT_ID:role/vercel-project-role
    ```
    
-4. **Set up the database schema** (one-time, after connecting the Aurora PostgreSQL integration):
-   ```bash
-   # Connect to your Aurora PostgreSQL cluster and run the schema script
-   psql -h $PGHOST -U $PGUSER -d $PGDATABASE -f scripts/001-setup-career-graph-schema.sql
-   ```
-   This creates the `career_graphs` and `alignments` tables with proper indexes.
+4. **Set up the database schema** (one-time, after connecting the 
 
 ### Running Locally
 

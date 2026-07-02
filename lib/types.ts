@@ -157,4 +157,6 @@ export interface AlignmentResult {
   gaps: SkillAlignment[]
   jobSkills: string[]
   resume: GeneratedResume
+  /** Which pipeline produced this result */
+  pipeline?: "vector-engine" | "fallback"
 }

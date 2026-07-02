@@ -30,20 +30,29 @@ export function SkillPill({
 }: {
   skill: string
   status: AlignmentStatus
+  /** Real cosine similarity score (0–1) from pgvector. Show for all statuses. */
   similarity?: number
 }) {
   const { icon: Icon, className } = config[status]
+
+  // Format: show as percentage, e.g. "82%" for matches, "34%" for gaps
+  const scoreLabel =
+    typeof similarity === "number"
+      ? `${Math.round(similarity * 100)}%`
+      : null
+
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
         className,
       )}
+      title={scoreLabel ? `Cosine similarity: ${scoreLabel}` : undefined}
     >
-      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       {skill}
-      {typeof similarity === "number" && status !== "gap" && (
-        <span className="opacity-60">{Math.round(similarity * 100)}%</span>
+      {scoreLabel && (
+        <span className="opacity-60 tabular-nums">{scoreLabel}</span>
       )}
     </span>
   )
