@@ -1,14 +1,11 @@
 import type { CareerGraph } from "./types"
 
 /**
- * In-memory career graph store.
+ * In-memory career graph store with seed data.
  *
- * This is intentionally simple so the app is fully functional today. When the
- * Aurora PostgreSQL + pgvector integration is connected at the end of the
- * project, the read/write functions below are replaced with parameterized
- * queries against the `career_profiles`, `experiences`, `skills`, `projects`,
- * `education`, and `certifications` tables
- * (schema lives in scripts/001-setup-career-graph-schema.sql).
+ * This provides default/demo data so the app works out of the box.
+ * When Supabase cloud storage is enabled, the useCareerData hook
+ * reads/writes to the `career_profiles` table instead.
  */
 
 const seedGraph: CareerGraph = {

@@ -21,36 +21,56 @@ interface TailoredBulletsResponse {
 
 // ─── Embedding with model fallback ──────────────────────────────────────────
 
-// Try models in order — availability depends on API key tier.
-const EMBEDDING_MODELS = [
-  "gemini-embedding-2",
-  "gemini-embedding-001",
-];
+// gemini-embedding-001: supports individual embeddings per input (batch-capable) — try first.
+// gemini-embedding-2: produces ONE aggregated embedding for multiple inputs; used per-item as fallback.
+const BATCH_MODEL = "gemini-embedding-001";
+const SINGLE_MODEL = "gemini-embedding-2";
 
+/**
+ * Generate one embedding per text. Uses gemini-embedding-001 in batch mode first.
+ * Falls back to gemini-embedding-2 called once-per-text if batch fails.
+ */
 async function generateEmbeddings(
   client: GoogleGenAI,
   texts: string[]
 ): Promise<number[][]> {
-  let lastError: unknown;
-  for (const model of EMBEDDING_MODELS) {
-    try {
-      const result = await client.models.embedContent({
-        model,
-        contents: texts,
-      });
-      const embeddings = result.embeddings?.map((e) => e.values ?? []) ?? [];
-      if (embeddings.length === texts.length && embeddings[0].length > 0) {
-        return embeddings;
-      }
-    } catch (err) {
-      console.warn(
-        `[align] Embedding model ${model} failed:`,
-        err instanceof Error ? err.message : err
-      );
-      lastError = err;
+  // Attempt 1: batch with gemini-embedding-001
+  try {
+    const result = await client.models.embedContent({
+      model: BATCH_MODEL,
+      contents: texts,
+    });
+    const embeddings = result.embeddings?.map((e) => e.values ?? []) ?? [];
+    if (embeddings.length === texts.length && embeddings[0].length > 0) {
+      console.log(`[align] Embeddings via ${BATCH_MODEL} (batch, ${texts.length} items)`);
+      return embeddings;
     }
+  } catch (err) {
+    console.warn(`[align] ${BATCH_MODEL} batch failed:`, err instanceof Error ? err.message : err);
   }
-  throw lastError ?? new Error("All embedding models failed.");
+
+  // Attempt 2: gemini-embedding-2 called individually per text
+  console.log(`[align] Falling back to ${SINGLE_MODEL} per-item...`);
+  const embeddings: number[][] = [];
+  for (const text of texts) {
+    const result = await client.models.embedContent({
+      model: SINGLE_MODEL,
+      contents: text,
+    });
+    const values = result.embeddings?.[0]?.values ?? [];
+    if (values.length === 0) throw new Error(`${SINGLE_MODEL} returned empty embedding for: ${text.slice(0, 40)}`);
+    embeddings.push(values);
+  }
+  console.log(`[align] Embeddings via ${SINGLE_MODEL} (per-item, ${texts.length} items)`);
+  return embeddings;
+}
+
+/**
+ * Format a JS number[] as a pgvector literal string: "[0.1, 0.2, ...]"
+ * Supabase RPC parameters of type vector[] must be text[], each element a vector string.
+ */
+function toVectorString(embedding: number[]): string {
+  return `[${embedding.join(",")}]`;
 }
 
 // ─── Gemini client ──────────────────────────────────────────────────────────
@@ -115,10 +135,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         ]);
 
         // 1c. Calculate Cosine Similarity via Supabase pgvector — no JS math needed!
+        // pgvector expects vector[] params as text[] where each element is "[n1,n2,...]"
         const supabase = getSupabaseClient();
         const { data, error } = await supabase.rpc("get_max_similarities", {
-          target_embeddings: jdEmbeddings,
-          skill_embeddings: skillEmbeddings,
+          target_embeddings: jdEmbeddings.map(toVectorString),
+          skill_embeddings: skillEmbeddings.map(toVectorString),
         });
 
         if (error) {
@@ -211,22 +232,25 @@ Provide 6-10 ATS-optimized resume bullet points. Each must start with a strong a
     baseResult.jobSkills = jdRequirements;
     baseResult.pipeline = usedVectorEngine ? "vector-engine" : "fallback";
 
-    // Pass real cosine similarity values — NOT hardcoded placeholders
-    baseResult.matched = matchedSkills.map(({ req, similarity }) => ({
-      skill: req,
-      status: "match" as const,
-      similarity: parseFloat(similarity.toFixed(3)),
-    }));
-    baseResult.partial = partialSkills.map(({ req, similarity }) => ({
-      skill: req,
-      status: "partial" as const,
-      similarity: parseFloat(similarity.toFixed(3)),
-    }));
-    baseResult.gaps = missingSkills.map(({ req, similarity }) => ({
-      skill: req,
-      status: "gap" as const,
-      similarity: parseFloat(similarity.toFixed(3)),
-    }));
+    // Only override skill analysis when the Vector Engine succeeded.
+    // When it failed, keep the local matching results from runAlignment().
+    if (usedVectorEngine) {
+      baseResult.matched = matchedSkills.map(({ req, similarity }) => ({
+        skill: req,
+        status: "match" as const,
+        similarity: parseFloat(similarity.toFixed(3)),
+      }));
+      baseResult.partial = partialSkills.map(({ req, similarity }) => ({
+        skill: req,
+        status: "partial" as const,
+        similarity: parseFloat(similarity.toFixed(3)),
+      }));
+      baseResult.gaps = missingSkills.map(({ req, similarity }) => ({
+        skill: req,
+        status: "gap" as const,
+        similarity: parseFloat(similarity.toFixed(3)),
+      }));
+    }
 
     // Inject GenAI-written bullets into the most recent experience
     if (baseResult.resume.experiences.length > 0 && tailoredBullets.length > 0) {

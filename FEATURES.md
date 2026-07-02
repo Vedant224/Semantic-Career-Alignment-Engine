@@ -1,83 +1,55 @@
-# Semantic Career Alignment Engine - Features
+# Semantic Career Alignment Engine — Features
+
+## Hybrid Semantic Architecture
+
+### Vector Engine (Phase 1 — The "Brain")
+- **Embedding Generation**: Profile skills and JD requirements are converted to 768-dim vectors via Gemini Embedding (`gemini-embedding-2`)
+- **Mathematical Cosine Similarity**: Supabase pgvector computes real cosine distance — no LLM guessing
+- **Objective Scoring**: Each skill gets a precise similarity score (0.0–1.0), classified as Matched (≥0.75), Partial (≥0.60), or Gap (<0.60)
+- **Pipeline Badge**: UI clearly indicates whether results came from the Vector Engine or local fallback
+
+### GenAI Engine (Phase 2 — The "Writer")
+- **Math-Backed Generation**: Only the mathematically proven gaps and matches are passed to Gemini Flash
+- **ATS-Optimized Bullets**: 6–10 resume bullet points rewritten with action verbs, metrics, and JD keywords
+- **Grounded Output**: The LLM writes based on objective vector similarity, not hallucination
+
+### Deterministic Fallback
+- When Supabase isn't configured, the engine uses a local token-overlap + synonym table matcher
+- Same UI, same workflow — just without pgvector math
 
 ## Resume Export & LaTeX Integration
 
-The Alignment Studio now supports professional resume export in multiple formats:
-
 ### PDF Export
-- **One-Click PDF Generation**: Click the **PDF** button in the resume header to instantly download your optimized resume as a single-page PDF file.
-- **ATS-Ready Format**: Uses professional typography (Fira Code monospace font) and single-page layout optimized for Applicant Tracking Systems.
-- **Visual Highlights**: JD-matched bullet points are highlighted in blue with `[JD MATCH]` labels for easy scanning.
+- **True LaTeX Compilation**: Server-side compilation via texlive.net for pixel-perfect professional PDFs
+- **ATS-Ready Format**: Latin Modern serif font, compact single-page layout
+- **JD-Matched Highlights**: Tailored bullets emphasized in royal blue with `[JD MATCH]` labels
+- **Fallback**: jsPDF generates an in-browser PDF if the LaTeX service is unavailable
 
 ### LaTeX Export
-- **Editable LaTeX Format**: Click the **LaTeX** button to download a professional ATS-optimized LaTeX resume template (`resume.tex`).
-- **LaTeX Template Structure**: Based on the provided ATS-Optimized Resume Template with:
-  - Professional color scheme (custom blue theme)
-  - Proper spacing and margins for single-page display
-  - Dynamic content population from your career graph
-  - ATS-parsable PDF generation via `pdflatex`
-- **Customizable**: Edit the `.tex` file directly to:
-  - Add custom contact information (email, phone, LinkedIn, GitHub, website)
-  - Adjust colors and styling
-  - Fine-tune spacing and layout
-  - Compile locally with `pdflatex resume.tex`
+- **Editable `.tex` File**: Download and customize locally
+- **Custom Macros**: Navy blue small-caps headings, precise spacing, categorized skill groups
+- **Compile locally**: `pdflatex resume.tex`
 
-### Typography
-- **Programming Font**: All text uses **Fira Code** monospace font for a clean, technical aesthetic that complements developer/engineer roles.
-- **Consistent Styling**: Both web and PDF exports maintain the same professional typography and layout.
+## Dual-Storage Framework
 
-## Resume Content Generation
+### Local Storage
+- Works offline, no setup required
+- 1-day expiry to keep data fresh
+- Toggle from the Career Graph page
 
-### Intelligent Tailoring
-- **Job Description Alignment**: The engine analyzes the pasted job description and:
-  - Ranks your skills by relevance to the role
-  - Reorders your experience bullets to prioritize JD-matching achievements
-  - Flags experience that directly aligns with role requirements
-  
-### Single-Page Optimization
-- **Space Efficiency**: All generated resumes are designed to fit on a single page, meeting ATS requirements and recruiter preferences.
-- **Core Skills Highlighting**: Top 4 skills are emphasized; technical skills are categorized for clarity.
+### Supabase Cloud
+- Persists career profiles with vector embeddings
+- Powers the Vector Engine for real similarity search
+- Anonymous access via RLS policies (hackathon mode)
 
-## Download Workflow
+## Data Management
+- **Export to JSON**: Download your career graph as a portable JSON file
+- **Import from JSON**: Re-import on any machine with structural validation
+- **Storage Toggle**: Switch between Local and Cloud from the Career Graph page
 
-1. **Paste Job Description** → Analyze & Align
-2. **View Optimized Resume** with real-time alignment visualization
-3. **Choose Download Format**:
-   - **PDF**: Download immediately for email/ATS submission
-   - **LaTeX**: Download `.tex` file for local compilation and full customization
-
-### Example LaTeX Workflow
-```bash
-# Download resume.tex from the app
-# Edit contact info and customize styling locally
-nano resume.tex
-
-# Compile to PDF
-pdflatex resume.tex
-
-# View result
-open resume.pdf
-```
-
-## Technical Implementation
-
-### Dependencies
-- **jspdf** & **html2canvas**: PDF generation from HTML
-- **Fira Code Font**: Google Fonts integration for typography
-- **LaTeX Generator** (`lib/latex-generator.ts`):
-  - `generateLatexResume()`: Converts alignment result to LaTeX
-  - `downloadLatex()`: Triggers browser download of `.tex` file
-  - `generatePdfFromHtml()`: Client-side PDF rendering
-
-### Component Structure
-- `ResumePanel`: Main resume display with export buttons
-- `PrintableResume`: Optimized single-page print layout
-- Export handlers for both PDF and LaTeX formats
-
-## Future Enhancements
-
-- Compile LaTeX directly in browser using WebAssembly
-- Multiple resume template variations (chronological, functional, hybrid)
-- Interactive LaTeX editor with live preview
-- ATS compatibility scoring for downloaded files
-- Integration with pgvector for semantic resume enhancement
+## Alignment Dashboard UI
+- **Score Ring**: Animated SVG ring showing alignment percentage (0–100)
+- **Pipeline Badge**: Green for Vector Engine, amber for Local Matching
+- **Cosine Similarity Breakdown**: Animated progress bars per JD requirement
+- **Skill Pills**: Color-coded chips showing match status + similarity percentage for all statuses
+- **Gap Analysis**: Highlighted section with specific skills to add or strengthen

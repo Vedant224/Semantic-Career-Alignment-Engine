@@ -1,36 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
-// Models to try in order — the SDK uses v1beta; availability depends on API key tier.
-const EMBEDDING_MODELS = [
-  "gemini-embedding-exp-03-07",
-  "text-embedding-005",
-  "text-embedding-004",
-  "embedding-001",
-];
+// gemini-embedding-001: supports individual embeddings per input (batch-capable) — try first.
+// gemini-embedding-2: produces ONE aggregated embedding for multiple inputs; used per-item as fallback.
+const BATCH_MODEL = "gemini-embedding-001";
+const SINGLE_MODEL = "gemini-embedding-2";
 
 async function generateEmbeddingsWithFallback(
   client: GoogleGenAI,
   inputs: string[]
 ): Promise<number[][]> {
-  let lastError: unknown;
-  for (const model of EMBEDDING_MODELS) {
-    try {
-      const response = await client.models.embedContent({
-        model,
-        contents: inputs,
-      });
-      const embeddings = response.embeddings?.map((e) => e.values ?? []) ?? [];
-      if (embeddings.length > 0 && embeddings[0].length > 0) {
-        console.log(`[embed] Using model: ${model}`);
-        return embeddings;
-      }
-    } catch (err) {
-      console.warn(`[embed] Model ${model} failed:`, err instanceof Error ? err.message : err);
-      lastError = err;
+  // Attempt 1: batch with gemini-embedding-001
+  try {
+    const response = await client.models.embedContent({
+      model: BATCH_MODEL,
+      contents: inputs,
+    });
+    const embeddings = response.embeddings?.map((e) => e.values ?? []) ?? [];
+    if (embeddings.length === inputs.length && embeddings[0].length > 0) {
+      console.log(`[embed] Using model: ${BATCH_MODEL} (batch)`);
+      return embeddings;
     }
+  } catch (err) {
+    console.warn(`[embed] Model ${BATCH_MODEL} failed:`, err instanceof Error ? err.message : err);
   }
-  throw lastError ?? new Error("All embedding models failed.");
+
+  // Attempt 2: gemini-embedding-2 called individually per text
+  console.log(`[embed] Falling back to ${SINGLE_MODEL} per-item...`);
+  const embeddings: number[][] = [];
+  for (const text of inputs) {
+    const result = await client.models.embedContent({
+      model: SINGLE_MODEL,
+      contents: text,
+    });
+    const values = result.embeddings?.[0]?.values ?? [];
+    if (values.length === 0) throw new Error(`${SINGLE_MODEL} returned empty embedding`);
+    embeddings.push(values);
+  }
+  console.log(`[embed] Using model: ${SINGLE_MODEL} (per-item)`);
+  return embeddings;
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {

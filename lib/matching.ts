@@ -13,12 +13,11 @@ import type {
 import { SKILL_CATEGORIES } from "./types"
 
 /**
- * Lightweight semantic matcher.
+ * Lightweight deterministic matcher — local fallback for the alignment engine.
  *
- * This is a deterministic, dependency-free stand-in for the real engine.
- * When the Aurora PostgreSQL + pgvector layer is wired up at the end of the
- * project, `embeddingSimilarity` below is replaced by a cosine-distance query
- * against stored skill/experience embeddings (see lib/db.ts and scripts/).
+ * When Supabase pgvector is available, the /api/align route uses the Vector
+ * Engine for real cosine similarity. This module serves as the fallback when
+ * the Vector Engine is unavailable (e.g., Supabase not configured).
  */
 
 // Curated vocabulary used to pull recognizable skills out of free-form text.
