@@ -82,9 +82,14 @@ ${skillsLines}
       ? `\\href{${proj.link}}{\\textbf{${escapeLatex(proj.name)}}}`
       : `\\textbf{${escapeLatex(proj.name)}}`
     const linkNode = proj.link ? `\\href{${proj.link}}{\\textcolor{custom2}{LINK}}` : ""
-    projectsContent += `      \\resumeProjectHeading\n          {${nameNode}${stack}}{${linkNode}}\n`
     if (proj.highlight) {
-      projectsContent += `          \\\\[3pt]\n          \\small{${escapeLatex(proj.highlight)}}\n`
+      projectsContent += `      \\item
+          \\begin{tabular*}{1.001\\textwidth}{l@{\\extracolsep{\\fill}}r}
+            \\small ${nameNode}${stack} & \\textbf{\\small ${linkNode}}\\\\[-3pt]
+            \\multicolumn{2}{p{\\textwidth}}{\\small\\textit{${escapeLatex(proj.highlight)}}}\\
+          \\end{tabular*}\\vspace{-9pt}\n`
+    } else {
+      projectsContent += `      \\resumeProjectHeading\n          {${nameNode}${stack}}{${linkNode}}\n`
     }
     projectsContent += `          \\resumeItemListStart\n`
     proj.bullets.forEach((bullet) => {
@@ -520,6 +525,7 @@ function renderResume(
           doc.text(line, marginX, y)
           y += lh(9) + 0.4
         })
+        y += 1.5 // Add spacing between highlight and bullets
       }
       proj.bullets.forEach((b) => bullet(b.text, b.emphasized))
       if (idx < resume.projects.length - 1) y += 1.8

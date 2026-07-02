@@ -16,7 +16,7 @@ async function generateEmbeddingsWithFallback(
       model: BATCH_MODEL,
       contents: inputs,
     });
-    const embeddings = response.embeddings?.map((e) => e.values ?? []) ?? [];
+    const embeddings = response.embeddings?.map((e) => (e.values ?? []).slice(0, 768)) ?? [];
     if (embeddings.length === inputs.length && embeddings[0].length > 0) {
       console.log(`[embed] Using model: ${BATCH_MODEL} (batch)`);
       return embeddings;
@@ -33,7 +33,7 @@ async function generateEmbeddingsWithFallback(
       model: SINGLE_MODEL,
       contents: text,
     });
-    const values = result.embeddings?.[0]?.values ?? [];
+    const values = (result.embeddings?.[0]?.values ?? []).slice(0, 768);
     if (values.length === 0) throw new Error(`${SINGLE_MODEL} returned empty embedding`);
     embeddings.push(values);
   }

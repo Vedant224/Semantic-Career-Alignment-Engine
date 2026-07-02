@@ -40,7 +40,7 @@ async function generateEmbeddings(
       model: BATCH_MODEL,
       contents: texts,
     });
-    const embeddings = result.embeddings?.map((e) => e.values ?? []) ?? [];
+    const embeddings = result.embeddings?.map((e) => (e.values ?? []).slice(0, 768)) ?? [];
     if (embeddings.length === texts.length && embeddings[0].length > 0) {
       console.log(`[align] Embeddings via ${BATCH_MODEL} (batch, ${texts.length} items)`);
       return embeddings;
@@ -57,7 +57,7 @@ async function generateEmbeddings(
       model: SINGLE_MODEL,
       contents: text,
     });
-    const values = result.embeddings?.[0]?.values ?? [];
+    const values = (result.embeddings?.[0]?.values ?? []).slice(0, 768);
     if (values.length === 0) throw new Error(`${SINGLE_MODEL} returned empty embedding for: ${text.slice(0, 40)}`);
     embeddings.push(values);
   }
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const reqExtractionPrompt = `Extract a concise list of the core technical and soft skill requirements from this Job Description. Return ONLY a JSON object with a "requirements" key containing an array of strings (each string is one skill/requirement).\n\nJob Description:\n${jobDescription}`;
 
     const reqRes = await client.models.generateContent({
-      model: "gemini-flash-latest",
+      model: "gemini-3.1-flash-lite",
       contents: reqExtractionPrompt,
       config: {
         responseMimeType: "application/json",
@@ -203,10 +203,10 @@ Act as the "Writer" engine. Use ONLY the mathematically proven insights above to
 - Bridge the gap for PARTIAL matches by framing existing experience differently
 - Suggest how MISSING skills could be positioned if relevant adjacent experience exists
 
-Provide 6-10 ATS-optimized resume bullet points. Each must start with a strong action verb and include specific metrics where available.`;
+Provide 3-4 concise, ATS-optimized resume bullet points. Each must start with a strong action verb and include specific metrics where available. Keep them punchy and directly relevant to the JD.`;
 
     const writerRes = await client.models.generateContent({
-      model: "gemini-flash-latest",
+      model: "gemini-3.1-flash-lite",
       contents: writerPrompt,
       config: {
         responseMimeType: "application/json",

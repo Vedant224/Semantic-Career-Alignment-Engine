@@ -31,6 +31,7 @@ import { SKILL_CATEGORIES } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { useCareerData } from "@/lib/use-career-data"
 import { DataManager } from "@/components/career-graph/data-manager"
+import { ResumeExtractor } from "@/components/career-graph/resume-extractor"
 import { Cloud, HardDrive } from "lucide-react"
 
 const LEVELS: Skill["level"][] = ["Beginner", "Intermediate", "Advanced", "Expert"]
@@ -218,6 +219,7 @@ export function CareerGraphForm() {
           <p className="text-xs text-muted-foreground">Import, export, and choose where your graph is saved.</p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
+          <ResumeExtractor onExtract={(g) => setGraph(g)} />
           <DataManager graph={graph} onImport={(g) => setGraph(g)} />
           
           <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/40 p-1">
